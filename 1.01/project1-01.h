@@ -3,3 +3,4 @@
 void fill_edges(char **world);
 void generate_world(char **world);
 void print_world(char **world);
+void clean_up(char **world);

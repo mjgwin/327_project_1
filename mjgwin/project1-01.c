@@ -51,20 +51,20 @@ void place_rooms(int roomCount){
       xSize = (rand() % (MAX_ROOM_WIDTH + 1 - MIN_ROOM_WIDTH)) + MIN_ROOM_WIDTH;
       ySize = (rand() % (MAX_ROOM_HEIGHT + 1 - MIN_ROOM_HEIGHT)) + MIN_ROOM_HEIGHT;
     }while(!in_bounds(xPos,yPos,xSize,ySize) ||
-     rooms_overlap(xPos,yPos,xSize,ySize,ROOM_SPACE_BUFFER, roomCount));
-    //Add dimensions to struct in roomList
-    d.rooms[i].xPos = xPos;
-    d.rooms[i].yPos = yPos;
-    d.rooms[i].xSize = xSize;
-    d.rooms[i].ySize = ySize;
-    //Edit world array to show position of each room
-    int j, k;
-    for(j = xPos; j <= xPos + xSize; j++){
-      for(k = yPos; k <= yPos + ySize; k++){
-	d.world[k][j] = ROOM;
-      }
-    }
-  }
+       rooms_overlap(xPos,yPos,xSize,ySize,ROOM_SPACE_BUFFER, roomCount));
+       //Add dimensions to struct in roomList
+       d.rooms[i].xPos = xPos;
+       d.rooms[i].yPos = yPos;
+       d.rooms[i].xSize = xSize;
+       d.rooms[i].ySize = ySize;
+       //Edit world array to show position of each room
+       int j, k;
+       for(j = xPos; j <= xPos + xSize; j++){
+          for(k = yPos; k <= yPos + ySize; k++){
+	     d.world[k][j] = ROOM;
+          }
+       }
+   }
 }
 
 int rooms_overlap(int xPos, int yPos, int xSize, int ySize, int buffer, int numRooms){

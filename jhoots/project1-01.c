@@ -15,6 +15,7 @@ int main(int argc, char *argv[]){
 
   place_rooms(rooms);
   place_corridors(rooms);
+  place_stairs(rooms);
   print_world(d.world);
   
   
@@ -116,6 +117,24 @@ int rooms_overlap(int xPos, int yPos, int xSize, int ySize, int buffer, int numR
   return 0;
 }
 
+void place_stairs(int numRooms){
+  int upIndex, downIndex;
+  do{
+    upIndex = (rand() % numRooms);
+    downIndex = (rand() % numRooms);
+  }while(upIndex == downIndex);
+
+  struct Room upRoom = d.rooms[upIndex];
+  struct Room downRoom = d.rooms[downIndex];
+  printf("Picked rooms with dimensions %d, %d and %d,%d", upRoom.xSize, upRoom.ySize, downRoom.xSize, downRoom.ySize);
+  int upXIndex = (rand() % upRoom.xSize);
+  int upYIndex = (rand() % upRoom.ySize);
+  int downXIndex = (rand() % downRoom.xSize);
+  int downYIndex = (rand() % downRoom.ySize);
+  
+  d.world[upYIndex + upRoom.yPos][upXIndex + upRoom.xPos] = UP_STAIR;
+  d.world[downYIndex + downRoom.yPos][downXIndex + downRoom.xPos] = DOWN_STAIR;
+}
 
 
 
@@ -133,6 +152,12 @@ void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]){
        }
        if(world[j][i] == CORRIDOR){
           printf("#");
+       }
+       if(world[j][i]==DOWN_STAIR){
+	 printf(">");
+       }
+       if(world[j][i]==UP_STAIR){
+	 printf("<");
        }
     }
     printf("|\n");

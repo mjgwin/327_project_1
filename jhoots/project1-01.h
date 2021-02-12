@@ -10,6 +10,8 @@
 #define EMPTY 0
 #define ROOM 1
 #define CORRIDOR 2
+#define UP_STAIR 3
+#define DOWN_STAIR 4
 
 struct Point{
    int x;
@@ -37,3 +39,4 @@ void place_rooms(int roomCount);
 int rooms_overlap(int xPos, int yPos, int xSize, int ySize, int buffer, int numRooms);
 struct Point closest_room_to(struct Room rooms, int roomNum);
 void place_corridors(int roomNum);
+void place_stairs(int numRooms);

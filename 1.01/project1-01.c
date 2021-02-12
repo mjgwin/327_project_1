@@ -10,9 +10,7 @@ int main(int argc, char *argv[]){
 
   srand(time(0));
   int rooms = (rand() % (MAX_ROOMS + 1 - MIN_ROOMS)) + MIN_ROOMS;
-  printf("%d\n", rooms);
   
-
   place_rooms(rooms);
   place_corridors(rooms);
   place_stairs(rooms);
@@ -126,7 +124,7 @@ void place_stairs(int numRooms){
 
   struct Room upRoom = d.rooms[upIndex];
   struct Room downRoom = d.rooms[downIndex];
-  printf("Picked rooms with dimensions %d, %d and %d,%d", upRoom.xSize, upRoom.ySize, downRoom.xSize, downRoom.ySize);
+
   int upXIndex = (rand() % upRoom.xSize);
   int upYIndex = (rand() % upRoom.ySize);
   int downXIndex = (rand() % downRoom.xSize);

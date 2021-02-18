@@ -14,29 +14,44 @@
 int main(int argc, char *argv[]){
 
   srand(time(0));
-  d.roomNum = (rand() % (MAX_ROOMS + 1 - MIN_ROOMS)) + MIN_ROOMS;
-  //char *filePath = "./testfiles/hello.rlg327";
-  char *filePath = strcat(getenv("HOME"), "/cs327/327_project_1/jhoots/testfiles/zzz.rlg327");
+  char *home = getenv("HOME");
+  char *gameDir = ".rlg327";
+  char *saveFile = "dungeon";
+  //3 is for 2 slashes + null terminator
+  char *filePath = malloc(strlen(home) + strlen(gameDir) + strlen(saveFile) + 3);
+  sprintf(filePath, "%s/%s/%s", home, gameDir, saveFile);
   printf("%s\n", filePath);
-  //mkdir(filePath, 0777);
   
-  d.rooms = malloc(d.roomNum * sizeof(struct Room));
-  
-  for (int i = 0; i < WORLD_HEIGHT; i++) {
-    for (int j = 0; j < WORLD_WIDTH; j++) {
-      d.hardness[i][j] = 255;
+  if(argc == 1){
+    generate_random();
+  }else{
+    if(argc == 2){
+      if(!strcmp("-load", argv[1])){
+	load_file(filePath);
+      }else if(!strcmp("-save", argv[1])){
+	generate_random();
+	save_file(filePath);
+      }else{
+	 printf("Error: bad args. Only flags are -load or -save or both\n");
+	 return 0;
+      }
+    }else if(argc == 3){
+      if((!strcmp("-load", argv[1]) && !strcmp("-save", argv[2])) ||
+      (!strcmp("-save", argv[1]) && !strcmp("-load", argv[2]))){
+	load_file(filePath);
+	save_file(filePath);
+      }else{
+	 printf("Error: bad args. Only flags are -load or -save or both\n");
+	 return 0;
+      }
+    }else{
+      printf("Error: bad number of args. Only flags are -load or -save or both\n");
+      return 0;
     }
   }
-  /*
-  place_rooms(d.roomNum);
-  place_corridors(d.roomNum);
-  place_stairs(d.roomNum);
-  save_file(filePath);
-  */
-  
-  load_file(filePath);
   
   print_world(d.world);
+  clean_up();
   return 0;
   
 }
@@ -44,7 +59,7 @@ int main(int argc, char *argv[]){
 
 void save_file(char *filePath) {
   FILE *f;
-  printf("made it to save_file");
+  //printf("made it to save_file");
   if(!(f = fopen(filePath, "w"))) {
     fprintf(stderr, "Failed to open file for writing");
     
@@ -152,7 +167,7 @@ void load_file(char *filePath) {
   int rooms;
   fread(&rooms, 2, 1, f);
   rooms = be16toh(rooms);
-  printf("Rooms: %d\n", rooms); 
+  // printf("Rooms: %d\n", rooms); 
   
   
   d.rooms = malloc(rooms * sizeof(struct Room));
@@ -175,7 +190,7 @@ void load_file(char *filePath) {
   int uCase;
   fread(&uCase, 2, 1, f);
   uCase = be16toh(uCase);
-  printf("%d\n", uCase);
+  // printf("%d\n", uCase);
   
   for(i = 0; i < uCase; i++) {
     uint8_t temp1, temp2;
@@ -187,7 +202,7 @@ void load_file(char *filePath) {
   int dCase;
   fread(&dCase, 2, 1, f);
   dCase = be16toh(dCase);
-  printf("%d\n", dCase);
+  //printf("%d\n", dCase);
   
   for(i = 0; i < dCase; i++) {
     uint8_t temp1, temp2;
@@ -196,14 +211,14 @@ void load_file(char *filePath) {
     d.world[(int) temp2][(int) temp1] = DOWN_STAIR;
   }
   
-  printf("made it here\n");
+  //printf("made it here\n");
   fclose(f);
 }
 
 
 void place_corridors(int roomNum){
   int i, j, k;
-  printf("mmade it to place corridors");
+  //printf("mmade it to place corridors");
   struct Point closest;
   for (i = 0; i < roomNum; i++){
     closest = closest_room_to(d.rooms[i], roomNum);
@@ -259,7 +274,7 @@ int in_bounds(int xPos, int yPos, int width, int height){
 
 
 void place_rooms(int roomCount){
-  printf("made it to place_rooms");
+  //printf("made it to place_rooms");
   //Loop through the number of rooms being generated and assign dimensions to each
   int i;
   for(i = 0; i < roomCount; i++){
@@ -306,7 +321,7 @@ int rooms_overlap(int xPos, int yPos, int xSize, int ySize, int buffer, int numR
 }
 
 void place_stairs(int numRooms){
-  printf("made it to place stairs");
+  //printf("made it to place stairs");
   int upIndex, downIndex;
   do{
     upIndex = (rand() % numRooms);
@@ -328,6 +343,21 @@ void place_stairs(int numRooms){
   d.downStair.x = downXIndex + downRoom.xPos;
   d.downStair.y = downYIndex + downRoom.yPos;
   d.world[downYIndex + downRoom.yPos][downXIndex + downRoom.xPos] = DOWN_STAIR;
+}
+
+void generate_random(){
+  d.roomNum = (rand() % (MAX_ROOMS + 1 - MIN_ROOMS)) + MIN_ROOMS;
+  d.rooms = malloc(d.roomNum * sizeof(struct Room));
+  
+  for (int i = 0; i < WORLD_HEIGHT; i++) {
+    for (int j = 0; j < WORLD_WIDTH; j++) {
+      d.hardness[i][j] = 255;
+    }
+  }
+ 
+  place_rooms(d.roomNum);
+  place_corridors(d.roomNum);
+  place_stairs(d.roomNum);
 }
 
 
@@ -363,4 +393,8 @@ void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]){
     printf("|\n");
   }
   printf(" -------------------------------------------------------------------------------- \n");
+}
+
+void clean_up(){
+  free(d.rooms);
 }

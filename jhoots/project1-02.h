@@ -46,3 +46,5 @@ void place_corridors(int roomNum);
 void place_stairs(int numRooms);
 void save_file(char *filePath);
 void load_file(char *filePath);
+void generate_random();
+void clean_up();

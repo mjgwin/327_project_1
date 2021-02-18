@@ -8,6 +8,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <endian.h>
+#include <unistd.h>
 #include "project1-02.h"
 
 
@@ -20,33 +21,32 @@ int main(int argc, char *argv[]){
   //3 is for 2 slashes + null terminator
   char *filePath = malloc(strlen(home) + strlen(gameDir) + strlen(saveFile) + 3);
   sprintf(filePath, "%s/%s/%s", home, gameDir, saveFile);
-  printf("%s\n", filePath);
+  //printf("%s\n", filePath);
   
-  if(argc == 1){
-    generate_random();
-  }else{
-    if(argc == 2){
-      if(!strcmp("-load", argv[1])){
-	load_file(filePath);
-      }else if(!strcmp("-save", argv[1])){
-	generate_random();
-	save_file(filePath);
-      }else{
-	 printf("Error: bad args. Only flags are -load or -save or both\n");
-	 return 0;
+  if(argc == 1) generate_random();
+  else{
+    int i;
+    for(i = 1; i < argc; i++) {
+      if(!strcmp("--load", argv[i])) LOAD = 1;
+      else if(!strcmp("--save", argv[i])) SAVE = 1;
+      else{ 
+        printf("Usage: --save | --load\n");
+        return 0;
       }
-    }else if(argc == 3){
-      if((!strcmp("-load", argv[1]) && !strcmp("-save", argv[2])) ||
-      (!strcmp("-save", argv[1]) && !strcmp("-load", argv[2]))){
-	load_file(filePath);
-	save_file(filePath);
-      }else{
-	 printf("Error: bad args. Only flags are -load or -save or both\n");
-	 return 0;
+    }
+    
+    if(LOAD) {
+      if(access(filePath, F_OK) == 0) {
+        load_file(filePath);
       }
-    }else{
-      printf("Error: bad number of args. Only flags are -load or -save or both\n");
-      return 0;
+      else{
+        generate_random();
+      }
+    }
+    else generate_random(filePath);
+    
+    if(SAVE) {
+      save_file(filePath);
     }
   }
   
@@ -98,7 +98,7 @@ void save_file(char *filePath) {
     int8_t y = d.rooms[i].yPos;
     int8_t xs = d.rooms[i].xSize;
     int8_t ys = d.rooms[i].ySize;
-    printf("\nRoom #%d\nx: %d\ny: %d\nxSize: %d\nySize: %d\n\n", i, x, y, xs, ys);
+    //printf("\nRoom #%d\nx: %d\ny: %d\nxSize: %d\nySize: %d\n\n", i, x, y, xs, ys);
     fwrite(&x, 1, 1, f);
     fwrite(&y, 1, 1, f);
     fwrite(&xs, 1, 1, f);
@@ -167,6 +167,7 @@ void load_file(char *filePath) {
   int rooms;
   fread(&rooms, 2, 1, f);
   rooms = be16toh(rooms);
+  d.roomNum = rooms;
   // printf("Rooms: %d\n", rooms); 
   
   
@@ -174,14 +175,13 @@ void load_file(char *filePath) {
 
   int k;
   for(i = 0; i < rooms; i++) {
-    struct Room *temp = &d.rooms[i];
-    fread(&temp->xPos, 1, 1, f);
-    fread(&temp->yPos, 1, 1, f);
-    fread(&temp->xSize, 1, 1, f);
-    fread(&temp->ySize, 1, 1, f);
+    fread(&d.rooms[i].xPos, 1, 1, f);
+    fread(&d.rooms[i].yPos, 1, 1, f);
+    fread(&d.rooms[i].xSize, 1, 1, f);
+    fread(&d.rooms[i].ySize, 1, 1, f);
     
-    for(k = temp->yPos; k < temp->yPos + temp->ySize; k++) {
-      for(j = temp->xPos; j < temp->xPos + temp->xSize; j++) {
+    for(k = d.rooms[i].yPos; k < d.rooms[i].yPos + d.rooms[i].ySize; k++) {
+      for(j = d.rooms[i].xPos; j < d.rooms[i].xPos + d.rooms[i].xSize; j++) {
         d.world[k][j] = ROOM;
       }
     }
@@ -196,6 +196,8 @@ void load_file(char *filePath) {
     uint8_t temp1, temp2;
     fread(&temp1, 1, 1, f);
     fread(&temp2, 1, 1, f);
+    d.upStair.x = temp1;
+    d.upStair.y = temp2;
     d.world[(int) temp2][(int) temp1] = UP_STAIR;
   }
  
@@ -208,10 +210,13 @@ void load_file(char *filePath) {
     uint8_t temp1, temp2;
     fread(&temp1, 1, 1, f);
     fread(&temp2, 1, 1, f);
+    d.downStair.x = temp1;
+    d.downStair.y = temp2;
     d.world[(int) temp2][(int) temp1] = DOWN_STAIR;
   }
   
-  //printf("made it here\n");
+  printf("uX: %d uY: %d\ndX: %d dY:%d\n",d.upStair.x, d.upStair.y, d.downStair.x, d.downStair.y);
+  printf("made it here\n");
   fclose(f);
 }
 

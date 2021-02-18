@@ -1,10 +1,10 @@
 #define WORLD_WIDTH 80
 #define WORLD_HEIGHT 21
-#define MAX_ROOMS 10
+#define MAX_ROOMS 8
 #define MIN_ROOMS 6
-#define MAX_ROOM_WIDTH 10
+#define MAX_ROOM_WIDTH 8
 #define MIN_ROOM_WIDTH 5
-#define MAX_ROOM_HEIGHT 10
+#define MAX_ROOM_HEIGHT 8
 #define MIN_ROOM_HEIGHT 5
 #define ROOM_SPACE_BUFFER 3
 #define EMPTY 0
@@ -36,6 +36,8 @@ struct Dungeon{
 
 struct Dungeon d;
 struct Point pc;
+int LOAD = 0;
+int SAVE = 0;
 
 void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]);
 int in_bounds(int xPos, int yPos, int width, int height);

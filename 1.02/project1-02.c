@@ -8,45 +8,50 @@
 #include <limits.h>
 #include <stdint.h>
 #include <endian.h>
+#include <unistd.h>
 #include "project1-02.h"
 
 
 int main(int argc, char *argv[]){
 
   srand(time(0));
-  int rooms = (rand() % (MAX_ROOMS + 1 - MIN_ROOMS)) + MIN_ROOMS;
-  char *filePath = "./testfiles/hello.rlg327";
-  printf("%s\n", filePath);
-  //mkdir(filePath, 0777);
+  char *home = getenv("HOME");
+  char *gameDir = ".rlg327";
+  char *saveFile = "dungeon";
+  //3 is for 2 slashes + null terminator
+  char *filePath = malloc(strlen(home) + strlen(gameDir) + strlen(saveFile) + 3);
+  sprintf(filePath, "%s/%s/%s", home, gameDir, saveFile);
+  //printf("%s\n", filePath);
   
-  //filePath = strcat(filePath, "/dungeon");
-  
-  load_file(filePath);
-  
-  /*
-  if (argc == 1) {
-    place_rooms(rooms);
-    place_corridors(rooms);
-    place_stairs(rooms);
-    print_world(d.world);
-    return 0;
+  if(argc == 1) generate_random();
+  else{
+    int i;
+    for(i = 1; i < argc; i++) {
+      if(!strcmp("--load", argv[i])) LOAD = 1;
+      else if(!strcmp("--save", argv[i])) SAVE = 1;
+      else{ 
+        printf("Usage: --save | --load\n");
+        return 0;
+      }
+    }
+    
+    if(LOAD) {
+      if(access(filePath, F_OK) == 0) {
+        load_file(filePath);
+      }
+      else{
+        generate_random();
+      }
+    }
+    else generate_random(filePath);
+    
+    if(SAVE) {
+      save_file(filePath);
+    }
   }
   
-  if (argc == 2) {
-    if(!strcmp(argv[1], "--save")) {
-      place_rooms(rooms);
-      place_corridors(rooms);
-      place_stairs(rooms);
-      print_world(d.world);
-      printf("--save flag is working\n");
-    }
-    else if(!strcmp(argv[1], "--load")) {
-      printf("--load flag is working\n");
-    }
-    else {
-      printf("error: flag not recognized
-    }
-  }*/
+  print_world(d.world);
+  clean_up();
   return 0;
   
 }
@@ -54,6 +59,7 @@ int main(int argc, char *argv[]){
 
 void save_file(char *filePath) {
   FILE *f;
+  //printf("made it to save_file");
   if(!(f = fopen(filePath, "w"))) {
     fprintf(stderr, "Failed to open file for writing");
     
@@ -63,6 +69,57 @@ void save_file(char *filePath) {
   char *name = "RLG327-S2021";
   fwrite(name, sizeof(char), strlen(name), f);
   
+  int version = 0;
+  version = htobe32(version);
+  fwrite(&version, 4, 1, f);
+  
+  int size = 50;
+  size = htobe32(size);
+  fwrite(&size, 4, 1, f);
+  
+  int8_t x = pc.x;
+  int8_t y = pc.y;
+  fwrite(&x, 1, 1, f);
+  fwrite(&y, 1, 1, f);
+  
+  int i, j;
+  for(j = 0; j < WORLD_HEIGHT; j++){
+    for(i = 0; i < WORLD_WIDTH; i++){
+      int toWrite = d.hardness[j][i];
+      fwrite(&toWrite, 1, 1, f);
+    }
+  }
+  
+  int16_t rNum = htobe16(d.roomNum);
+  fwrite(&rNum, 2, 1, f);
+  
+  for(i = 0; i < d.roomNum; i++) {
+    int8_t x = d.rooms[i].xPos;
+    int8_t y = d.rooms[i].yPos;
+    int8_t xs = d.rooms[i].xSize;
+    int8_t ys = d.rooms[i].ySize;
+    //printf("\nRoom #%d\nx: %d\ny: %d\nxSize: %d\nySize: %d\n\n", i, x, y, xs, ys);
+    fwrite(&x, 1, 1, f);
+    fwrite(&y, 1, 1, f);
+    fwrite(&xs, 1, 1, f);
+    fwrite(&ys, 1, 1, f);
+  }
+  
+  int16_t uNum = htobe16(1);
+  fwrite(&uNum, 2, 1, f);
+  
+  x = d.upStair.x;
+  y = d.upStair.y;
+  fwrite(&x, 1, 1, f);
+  fwrite(&y, 1, 1, f);
+  
+  int16_t dNum = htobe16(1);
+  fwrite(&dNum, 2, 1, f);
+  
+  x = d.downStair.x;
+  y = d.downStair.y;
+  fwrite(&x, 1, 1, f);
+  fwrite(&y, 1, 1, f);
   
   
   
@@ -71,39 +128,29 @@ void save_file(char *filePath) {
 
 void load_file(char *filePath) {
   FILE *f;
-  // char buffer[100] = {'\0'};
   char marker[13];
   marker[12] = '\0';
   
-  //opens file in reading binary mode
   if(!(f = fopen(filePath, "rb"))) {
     fprintf(stderr, "Failed to open file for reading");
     
     return;
   }
   
-  //reads and prints the file type marker
   fread(marker, 12, 1, f);
-  //printf("%s\n", marker);
-  
-  //reads file version marker
+
   int version;
   fread(&version, 4, 1, f);
   version = be32toh(version);
-  //printf("%d\n", version);
-  
-  //reads size of the file
+
   int file_size;
   fread(&file_size, 4, 1, f);
   file_size = be32toh(file_size);
-  //printf("%d\n", file_size);
 
-  //reads the x and y position of the PC
   fread(&pc.x, 1, 1, f);
-  //printf("pc.x = %d\n", pc.x);
-  
+
   fread(&pc.y, 1, 1, f);
-  //printf("pc.y = %d\n", pc.y);
+ 
   uint8_t hardness[WORLD_HEIGHT][WORLD_WIDTH];
   fread(hardness, 1, 1680, f);
   
@@ -114,80 +161,69 @@ void load_file(char *filePath) {
       if((int)hardness[j][i] == 0) {
 	d.world[j][i] = CORRIDOR;
       }
-      // printf("%d ", d.hardness[j][i]);
     }
-    // printf("\n");
   }
   
-  //reads the number of rooms
   int rooms;
   fread(&rooms, 2, 1, f);
   rooms = be16toh(rooms);
-  //for some reason the rooms were all multiplied ny a factor of 256 not sure why yet
-  //for debigging
-  //printf("%d\n", rooms); 
+  d.roomNum = rooms;
+  // printf("Rooms: %d\n", rooms); 
   
   
   d.rooms = malloc(rooms * sizeof(struct Room));
-  //assigns proper values for each room in the global variable
 
   int k;
   for(i = 0; i < rooms; i++) {
-    struct Room *temp = &d.rooms[i];
-    fread(&temp->xPos, 1, 1, f);
-    fread(&temp->yPos, 1, 1, f);
-    fread(&temp->xSize, 1, 1, f);
-    fread(&temp->ySize, 1, 1, f);
+    fread(&d.rooms[i].xPos, 1, 1, f);
+    fread(&d.rooms[i].yPos, 1, 1, f);
+    fread(&d.rooms[i].xSize, 1, 1, f);
+    fread(&d.rooms[i].ySize, 1, 1, f);
     
-    for(k = temp->yPos; k < temp->yPos + temp->ySize; k++) {
-      for(j = temp->xPos; j < temp->xPos + temp->xSize; j++) {
+    for(k = d.rooms[i].yPos; k < d.rooms[i].yPos + d.rooms[i].ySize; k++) {
+      for(j = d.rooms[i].xPos; j < d.rooms[i].xPos + d.rooms[i].xSize; j++) {
         d.world[k][j] = ROOM;
       }
     }
-    
-    //very useful for debugging
-    //printf("Room #%d\nxPos: %d\nyPos: %d\nxSize: %d\nySize: %d\n\n", i + 1, d.rooms[i].xPos, d.rooms[i].yPos, d.rooms[i].xSize, d.rooms[i].ySize);
   }
   
-  //reads the number of upward stair cases
   int uCase;
   fread(&uCase, 2, 1, f);
   uCase = be16toh(uCase);
+  // printf("%d\n", uCase);
   
-  //assigns stair cases to world map
   for(i = 0; i < uCase; i++) {
     uint8_t temp1, temp2;
     fread(&temp1, 1, 1, f);
     fread(&temp2, 1, 1, f);
+    d.upStair.x = temp1;
+    d.upStair.y = temp2;
     d.world[(int) temp2][(int) temp1] = UP_STAIR;
   }
-  
-  //reads the number of downward stair cases
+ 
   int dCase;
   fread(&dCase, 2, 1, f);
   dCase = be16toh(dCase);
+  //printf("%d\n", dCase);
   
-  //assigns downward staircases to world map
   for(i = 0; i < dCase; i++) {
     uint8_t temp1, temp2;
     fread(&temp1, 1, 1, f);
     fread(&temp2, 1, 1, f);
+    d.downStair.x = temp1;
+    d.downStair.y = temp2;
     d.world[(int) temp2][(int) temp1] = DOWN_STAIR;
   }
   
+  printf("uX: %d uY: %d\ndX: %d dY:%d\n",d.upStair.x, d.upStair.y, d.downStair.x, d.downStair.y);
+  printf("made it here\n");
   fclose(f);
-  
-  
-  
-  print_world(d.world);
-
-  
-  
 }
 
 
 void place_corridors(int roomNum){
   int i, j, k;
+  //printf("mmade it to place corridors");
   struct Point closest;
   for (i = 0; i < roomNum; i++){
     closest = closest_room_to(d.rooms[i], roomNum);
@@ -207,6 +243,7 @@ void place_corridors(int roomNum){
       }
       else if(d.world[y][x] == EMPTY) {
         d.world[y][x] = CORRIDOR;
+        d.hardness[y][x] = 0;
       }
     }
   }
@@ -242,6 +279,7 @@ int in_bounds(int xPos, int yPos, int width, int height){
 
 
 void place_rooms(int roomCount){
+  //printf("made it to place_rooms");
   //Loop through the number of rooms being generated and assign dimensions to each
   int i;
   for(i = 0; i < roomCount; i++){
@@ -261,9 +299,14 @@ void place_rooms(int roomCount){
        d.rooms[i].ySize = ySize;
        //Edit world array to show position of each room
        int j, k;
-       for(j = xPos; j <= xPos + xSize; j++){
-          for(k = yPos; k <= yPos + ySize; k++){
-	     d.world[k][j] = ROOM;
+       for(j = yPos; j < yPos + ySize; j++){
+          for(k = xPos; k < xPos + xSize; k++){
+	     d.world[j][k] = ROOM;
+	     if (i == 0) {
+	       pc.x = d.rooms[i].xPos;
+	       pc.y = d.rooms[i].yPos;
+	     }
+	     d.hardness[j][k] = 0;
           }
        }
    }
@@ -283,6 +326,7 @@ int rooms_overlap(int xPos, int yPos, int xSize, int ySize, int buffer, int numR
 }
 
 void place_stairs(int numRooms){
+  //printf("made it to place stairs");
   int upIndex, downIndex;
   do{
     upIndex = (rand() % numRooms);
@@ -297,8 +341,28 @@ void place_stairs(int numRooms){
   int downXIndex = (rand() % downRoom.xSize);
   int downYIndex = (rand() % downRoom.ySize);
   
+  d.upStair.x = upXIndex + upRoom.xPos;
+  d.upStair.y = upYIndex + upRoom.yPos;
   d.world[upYIndex + upRoom.yPos][upXIndex + upRoom.xPos] = UP_STAIR;
+  
+  d.downStair.x = downXIndex + downRoom.xPos;
+  d.downStair.y = downYIndex + downRoom.yPos;
   d.world[downYIndex + downRoom.yPos][downXIndex + downRoom.xPos] = DOWN_STAIR;
+}
+
+void generate_random(){
+  d.roomNum = (rand() % (MAX_ROOMS + 1 - MIN_ROOMS)) + MIN_ROOMS;
+  d.rooms = malloc(d.roomNum * sizeof(struct Room));
+  
+  for (int i = 0; i < WORLD_HEIGHT; i++) {
+    for (int j = 0; j < WORLD_WIDTH; j++) {
+      d.hardness[i][j] = 255;
+    }
+  }
+ 
+  place_rooms(d.roomNum);
+  place_corridors(d.roomNum);
+  place_stairs(d.roomNum);
 }
 
 
@@ -309,6 +373,7 @@ void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]){
   for(j = 0; j < WORLD_HEIGHT; j++){
     printf("|");
     for(i = 0; i < WORLD_WIDTH; i++){
+
        if(pc.x == i && pc.y == j) {
 	 printf("@");
           continue;
@@ -333,4 +398,8 @@ void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]){
     printf("|\n");
   }
   printf(" -------------------------------------------------------------------------------- \n");
+}
+
+void clean_up(){
+  free(d.rooms);
 }

@@ -3,9 +3,9 @@
 #define MAX_ROOMS 8
 #define MIN_ROOMS 6
 #define MAX_ROOM_WIDTH 8
-#define MIN_ROOM_WIDTH 4
+#define MIN_ROOM_WIDTH 5
 #define MAX_ROOM_HEIGHT 8
-#define MIN_ROOM_HEIGHT 3
+#define MIN_ROOM_HEIGHT 5
 #define ROOM_SPACE_BUFFER 3
 #define EMPTY 0
 #define ROOM 1
@@ -28,11 +28,16 @@ struct Room{
 struct Dungeon{
    int world[WORLD_HEIGHT][WORLD_WIDTH];
    int hardness[WORLD_HEIGHT][WORLD_WIDTH];
-   struct Room rooms[MAX_ROOMS];
+   int roomNum;
+   struct Room *rooms;
+   struct Point upStair;
+   struct Point downStair;
 };
 
 struct Dungeon d;
 struct Point pc;
+int LOAD = 0;
+int SAVE = 0;
 
 void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]);
 int in_bounds(int xPos, int yPos, int width, int height);
@@ -43,3 +48,5 @@ void place_corridors(int roomNum);
 void place_stairs(int numRooms);
 void save_file(char *filePath);
 void load_file(char *filePath);
+void generate_random();
+void clean_up();

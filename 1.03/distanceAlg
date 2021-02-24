@@ -5,9 +5,9 @@
 
 
 typedef struct node {
-    int data[];
     int prio;
     struct node* next;
+    int data[2];
 
 } Node;
 
@@ -68,7 +68,7 @@ int hexConverter( char hex[] )
 	return 0;
 }
 
-int boaringDist( int hardness[][] , int playerpos[])
+int boaringDist( int hardness[21][80] , int playerpos[2])
 {
 	Node* q = newNode( playerpos , 0 );
 
@@ -89,7 +89,8 @@ int boaringDist( int hardness[][] , int playerpos[])
 
 	while(!isEmpty(&q))
 	{
-		Node cur = peek(&q);
+		int cur[2];
+		cur = peek(&q);
 		pop(&q);
 
 		int y;
@@ -99,13 +100,13 @@ int boaringDist( int hardness[][] , int playerpos[])
 		{
 			for( x = -1 ; x <= 1 ; x += 1 )
 			{
-				if( (cur->data[0] + y) < 21 && (cur->data[0] + y) >= 0 && (cur->data[1] + x) >= 0 && (cur->data[1] + x) < 80 )
+				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(dist[cur->data[0] + y][cur->data[1] + x] > cur->prio + 1 + (hexConverter(hardness[cur->data[0] + y][cur->data[1] + x]) / 85 ) && hexConverter(hardness[cur->data[0] + y][cur->data[1] + x]) < 255)
+					if(dist[cur[0] + y][cur[1] + x] > dist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 ) && hexConverter(hardness[cur[0] + y][cur[1] + x]) < 255)
 					{
-						dist[cur->data[0] + y][cur->data[1] + x] = cur->prio + 1 + (hexConverter(hardness[cur->data[0] + y][cur->data[1] + x]) / 85 );
-						int po[] = { cur->data[0] + y , cur->data[1] + x };
-						push( &q , po , dist[cur->data[0] + y][cur->data[1] + x] );
+						dist[cur[0] + y][cur[1] + x] = dist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 );
+						int po[] = { cur[0] + y , cur[1] + x };
+						push( &q , po , dist[cur[0] + y][cur[1] + x] );
 					}
 				}
 			}
@@ -116,7 +117,7 @@ int boaringDist( int hardness[][] , int playerpos[])
 }
 
 
-int walkingDist(int world[][], int playerpos[])
+int walkingDist(int world[21][80], int playerpos[2])
 {
 	Node* q = newNode( playerpos , 0 );
 
@@ -137,7 +138,8 @@ int walkingDist(int world[][], int playerpos[])
 
 	while(!isEmpty(&q))
 	{
-		Node cur = peek(&q);
+		int cur[2];
+		cur = peek(&q);
 		pop(&q);
 
 		int y;
@@ -147,13 +149,13 @@ int walkingDist(int world[][], int playerpos[])
 		{
 			for( x = -1 ; x <= 1 ; x += 1 )
 			{
-				if( (cur->data[0] + y) < 21 && (cur->data[0] + y) >= 0 && (cur->data[1] + x) >= 0 && (cur->data[1] + x) < 80 )
+				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(dist[cur->data[0] + y][cur->data[1] + x] > cur->prio + 1 && world[cur->data[0] + y][cur->data[1] + x] >= 1)
+					if(dist[cur[0] + y][cur[1] + x] > dist[cur[0]][cur[1]] + 1 && world[cur[0] + y][cur[1] + x] >= 1)
 					{
-						dist[cur->data[0] + y][cur->data[1] + x] = cur->prio + 1;
-						int po[] = { cur->data[0] + y , cur->data[1] + x };
-						push( &q , po , dist[cur->data[0] + y][cur->data[1] + x] );
+						dist[cur[0] + y][cur[1] + x] = dist[cur[0]][cur[1]] + 1;
+						int po[] = { cur[0] + y , cur[1] + x };
+						push( &q , po , dist[cur[0] + y][cur[1] + x] );
 					}
 				}
 			}
@@ -162,6 +164,24 @@ int walkingDist(int world[][], int playerpos[])
 
 	return dist;
 }
+
+int main()
+{
+    // Create a Priority Queue
+    // 7->4->5->6
+    Node* pq = newNode(4, 1);
+    push(&pq, 5, 2);
+    push(&pq, 6, 3);
+    push(&pq, 7, 0);
+
+    while (!isEmpty(&pq)) {
+        printf("%d ", peek(&pq));
+        pop(&pq);
+    }
+
+    return 0;
+}
+
 
 
 

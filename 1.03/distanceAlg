@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define NULL (void *)0
 
 
 typedef struct node {
@@ -22,7 +21,7 @@ Node* newNode(int d[], int p)
     return temp;
 }
 
-int peek(Node** head)
+int * peek(Node** head)
 {
     return (*head)->data;
 }
@@ -65,10 +64,12 @@ int isEmpty(Node** head)
 
 int hexConverter( char hex[] )
 {
-	return 0;
+	int t;
+	t = 21;
+	return t;
 }
 
-int boaringDist( int hardness[21][80] , int playerpos[2])
+int * boaringDist( char hardness[21][80] , int playerpos[2])
 {
 	Node* q = newNode( playerpos , 0 );
 
@@ -90,7 +91,10 @@ int boaringDist( int hardness[21][80] , int playerpos[2])
 	while(!isEmpty(&q))
 	{
 		int cur[2];
-		cur = peek(&q);
+
+		cur[0] = peek(&q)[0];
+		cur[1] = peek(&q)[1];
+
 		pop(&q);
 
 		int y;
@@ -117,7 +121,7 @@ int boaringDist( int hardness[21][80] , int playerpos[2])
 }
 
 
-int walkingDist(int world[21][80], int playerpos[2])
+int * walkingDist(int world[21][80], int playerpos[2])
 {
 	Node* q = newNode( playerpos , 0 );
 
@@ -139,7 +143,10 @@ int walkingDist(int world[21][80], int playerpos[2])
 	while(!isEmpty(&q))
 	{
 		int cur[2];
-		cur = peek(&q);
+
+		cur[0] = peek(&q)[0];
+		cur[1] = peek(&q)[1];
+
 		pop(&q);
 
 		int y;
@@ -163,23 +170,6 @@ int walkingDist(int world[21][80], int playerpos[2])
 	}
 
 	return dist;
-}
-
-int main()
-{
-    // Create a Priority Queue
-    // 7->4->5->6
-    Node* pq = newNode(4, 1);
-    push(&pq, 5, 2);
-    push(&pq, 6, 3);
-    push(&pq, 7, 0);
-
-    while (!isEmpty(&pq)) {
-        printf("%d ", peek(&pq));
-        pop(&pq);
-    }
-
-    return 0;
 }
 
 

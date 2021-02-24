@@ -11,10 +11,11 @@ typedef struct node {
 } Node;
 
 
-Node* newNode(int d[], int p)
+Node* newNode(int x , int y , int p)
 {
     Node* temp = (Node*)malloc(sizeof(Node));
-    temp->data = d;
+    temp->data[0] = x;
+    temp->data[1] = y;
     temp->prio = p;
     temp->next = NULL;
 
@@ -34,10 +35,10 @@ void pop(Node** head)
 }
 
 
-void push(Node** head, int d[], int p)
+void push(Node** head, int d[2], int p)
 {
 
-    Node* temp = newNode(d, p);
+    Node* temp = newNode( d[0] , d[1] , p );
     Node* start = (*head);
     if ((*head)->prio > p)
     {
@@ -71,7 +72,7 @@ int hexConverter( char hex[] )
 
 int * boaringDist( char hardness[21][80] , int playerpos[2])
 {
-	Node* q = newNode( playerpos , 0 );
+	Node* q = newNode( playerpos[0] , playerpos[1] , 0 );
 
 	int dist[21][80];
 
@@ -123,7 +124,7 @@ int * boaringDist( char hardness[21][80] , int playerpos[2])
 
 int * walkingDist(int world[21][80], int playerpos[2])
 {
-	Node* q = newNode( playerpos , 0 );
+	Node* q = newNode( playerpos[0] , playerpos[1] , 0 );
 
 	int dist[21][80];
 
@@ -171,7 +172,4 @@ int * walkingDist(int world[21][80], int playerpos[2])
 
 	return dist;
 }
-
-
-
 

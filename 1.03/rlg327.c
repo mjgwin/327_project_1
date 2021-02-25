@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <errno.h>
 
-#include "heap.h"
+#include "Heap.h"
 
 #define DUMP_HARDNESS_IMAGES 0
 

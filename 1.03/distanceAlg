@@ -64,14 +64,7 @@ int isEmpty(Node** head)
     return (*head) == NULL;
 }
 
-int hexConverter( char hex[] )
-{
-	int t;
-	t = 21;
-	return t;
-}
-
-int * boaringDist( char * hardness[21][80] , int playerpos[2])
+int * boaringDist( int hardness[21][80] , int playerpos[2])
 {
 	Node* q = newNode( playerpos[0] , playerpos[1] , 0 );
 
@@ -108,9 +101,9 @@ int * boaringDist( char * hardness[21][80] , int playerpos[2])
 			{
 				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(boreDist[cur[0] + y][cur[1] + x] > boreDist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 ) && hexConverter(hardness[cur[0] + y][cur[1] + x]) < 255)
+					if(boreDist[cur[0] + y][cur[1] + x] > boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 ) && hardness[cur[0] + y][cur[1] + x] < 255)
 					{
-						boreDist[cur[0] + y][cur[1] + x] = boreDist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 );
+						boreDist[cur[0] + y][cur[1] + x] = boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 );
 						int po[] = { cur[0] + y , cur[1] + x };
 						push( &q , po , boreDist[cur[0] + y][cur[1] + x] );
 					}
@@ -175,5 +168,4 @@ int * walkingDist(int world[21][80], int playerpos[2])
 
 	return walkDist;
 }
-
 

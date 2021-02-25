@@ -28,16 +28,27 @@ struct Room{
 struct Dungeon{
    int world[WORLD_HEIGHT][WORLD_WIDTH];
    int hardness[WORLD_HEIGHT][WORLD_WIDTH];
+   int boreDist[WORLD_HEIGHT][WORLD_WIDTH];
+   int walkDist[WORLD_HEIGHT][WORLD_WIDTH];
    int roomNum;
    struct Room *rooms;
    struct Point upStair;
    struct Point downStair;
 };
 
+
+typedef struct node {
+    int prio;
+    struct node* next;
+    int data[2];
+
+} Node;
+
 struct Dungeon d;
 struct Point pc;
 int LOAD = 0;
 int SAVE = 0;
+
 
 void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]);
 int in_bounds(int xPos, int yPos, int width, int height);
@@ -50,3 +61,11 @@ void save_file(char *filePath);
 void load_file(char *filePath);
 void generate_random();
 void clean_up();
+
+Node* newNode(int x , int y , int p);
+int * peek(Node** head);
+void pop(Node** head);
+void push(Node** head, int d[2], int p);
+int isEmpty(Node** head);
+void boringDist();
+void walkingDist();

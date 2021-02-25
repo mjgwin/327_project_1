@@ -403,3 +403,154 @@ void print_world(int world[WORLD_HEIGHT][WORLD_WIDTH]){
 void clean_up(){
   free(d.rooms);
 }
+
+Node* newNode(int x , int y , int p)
+{
+    Node* temp = (Node*)malloc(sizeof(Node));
+    temp->data[0] = x;
+    temp->data[1] = y;
+    temp->prio = p;
+    temp->next = NULL;
+
+    return temp;
+}
+
+int * peek(Node** head)
+{
+    return (*head)->data;
+}
+
+void pop(Node** head)
+{
+    Node* temp = *head;
+    (*head) = (*head)->next;
+    free(temp);
+}
+
+
+void push(Node** head, int d[2], int p)
+{
+
+    Node* temp = newNode( d[0] , d[1] , p );
+    Node* start = (*head);
+    if ((*head)->prio > p)
+    {
+        temp->next = *head;
+        (*head) = temp;
+    }
+    else
+    {
+
+       while (start->next != NULL && start->next->prio < p)
+       {
+           start = start->next;
+       }
+
+        temp->next = start->next;
+        start->next = temp;
+    }
+}
+
+int isEmpty(Node** head)
+{
+    return (*head) == NULL;
+}
+
+void boringDist()
+{
+	Node* q = newNode( pc.x , pc.y , 0 );
+
+	int i;
+	int j;
+
+	for( i = 0 ; i < 21 ; i += 1 )
+	{
+		for( j = 0 ; j < 80 ; j += 1 )
+		{
+			d.boreDist[i][j] = 10000;
+		}
+	}
+
+	d.boreDist[pc.x][pc.y] = 0;
+
+	while(!isEmpty(&q))
+	{
+		int cur[2];
+
+		cur[0] = peek(&q)[0];
+		cur[1] = peek(&q)[1];
+
+		pop(&q);
+
+		int y;
+		int x;
+
+		for( y = -1 ; y <= 1 ; y += 1 )
+		{
+			for( x = -1 ; x <= 1 ; x += 1 )
+			{
+				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
+				{
+					if(d.boreDist[cur[0] + y][cur[1] + x] > d.boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 ) && hardness[cur[0] + y][cur[1] + x] < 255)
+					{
+						d.boreDist[cur[0] + y][cur[1] + x] = d.boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 );
+						int po[] = { cur[0] + y , cur[1] + x };
+						push( &q , po , boreDist[cur[0] + y][cur[1] + x] );
+					}
+				}
+			}
+		}
+	}
+
+       
+}
+
+
+void walkingDist()
+{
+	Node* q = newNode( pc.x , pc.y , 0 );
+
+	int i;
+	int j;
+
+	for( i = 0 ; i < 21 ; i += 1 )
+	{
+		for( j = 0 ; j < 80 ; j += 1 )
+		{
+				d.walkDist[i][j] = 10000;
+		}
+	}
+
+	d.walkDist[pc.x][pc.y] = 0;
+
+	while(!isEmpty(&q))
+	{
+		int cur[2];
+
+		cur[0] = peek(&q)[0];
+		cur[1] = peek(&q)[1];
+
+		pop(&q);
+
+		int y;
+		int x;
+
+		for( y = -1 ; y <= 1 ; y += 1 )
+		{
+			for( x = -1 ; x <= 1 ; x += 1 )
+			{
+				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
+				{
+					if(d.walkDist[cur[0] + y][cur[1] + x] > d.walkDist[cur[0]][cur[1]] + 1 && world[cur[0] + y][cur[1] + x] >= 1)
+					{
+						d.walkDist[cur[0] + y][cur[1] + x] = d.walkDist[cur[0]][cur[1]] + 1;
+						int po[] = { cur[0] + y , cur[1] + x };
+						push( &q , po , d.walkDist[cur[0] + y][cur[1] + x] );
+					}
+				}
+			}
+		}
+	}
+
+}
+

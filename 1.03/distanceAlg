@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
+#include <string.h>
 
 
 typedef struct node {
@@ -70,11 +71,11 @@ int hexConverter( char hex[] )
 	return t;
 }
 
-int * boaringDist( char hardness[21][80] , int playerpos[2])
+int * boaringDist( char * hardness[21][80] , int playerpos[2])
 {
 	Node* q = newNode( playerpos[0] , playerpos[1] , 0 );
 
-	int dist[21][80];
+	int boreDist[21][80];
 
 	int i;
 	int j;
@@ -83,11 +84,11 @@ int * boaringDist( char hardness[21][80] , int playerpos[2])
 	{
 		for( j = 0 ; j < 80 ; j += 1 )
 		{
-			dist[i][j] = 10000;
+			boreDist[i][j] = 10000;
 		}
 	}
 
-	dist[playerpos[0]][playerpos[1]] = 0;
+	boreDist[playerpos[0]][playerpos[1]] = 0;
 
 	while(!isEmpty(&q))
 	{
@@ -107,18 +108,18 @@ int * boaringDist( char hardness[21][80] , int playerpos[2])
 			{
 				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(dist[cur[0] + y][cur[1] + x] > dist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 ) && hexConverter(hardness[cur[0] + y][cur[1] + x]) < 255)
+					if(boreDist[cur[0] + y][cur[1] + x] > boreDist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 ) && hexConverter(hardness[cur[0] + y][cur[1] + x]) < 255)
 					{
-						dist[cur[0] + y][cur[1] + x] = dist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 );
+						boreDist[cur[0] + y][cur[1] + x] = boreDist[cur[0]][cur[1]] + 1 + (hexConverter(hardness[cur[0] + y][cur[1] + x]) / 85 );
 						int po[] = { cur[0] + y , cur[1] + x };
-						push( &q , po , dist[cur[0] + y][cur[1] + x] );
+						push( &q , po , boreDist[cur[0] + y][cur[1] + x] );
 					}
 				}
 			}
 		}
 	}
 
-	return dist;
+	return boreDist;
 }
 
 
@@ -126,7 +127,8 @@ int * walkingDist(int world[21][80], int playerpos[2])
 {
 	Node* q = newNode( playerpos[0] , playerpos[1] , 0 );
 
-	int dist[21][80];
+	int walkDist[21][80];
+
 
 	int i;
 	int j;
@@ -135,11 +137,11 @@ int * walkingDist(int world[21][80], int playerpos[2])
 	{
 		for( j = 0 ; j < 80 ; j += 1 )
 		{
-				dist[i][j] = 10000;
+				walkDist[i][j] = 10000;
 		}
 	}
 
-	dist[playerpos[0]][playerpos[1]] = 0;
+	walkDist[playerpos[0]][playerpos[1]] = 0;
 
 	while(!isEmpty(&q))
 	{
@@ -159,17 +161,19 @@ int * walkingDist(int world[21][80], int playerpos[2])
 			{
 				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(dist[cur[0] + y][cur[1] + x] > dist[cur[0]][cur[1]] + 1 && world[cur[0] + y][cur[1] + x] >= 1)
+					if(walkDist[cur[0] + y][cur[1] + x] > walkDist[cur[0]][cur[1]] + 1 && world[cur[0] + y][cur[1] + x] >= 1)
 					{
-						dist[cur[0] + y][cur[1] + x] = dist[cur[0]][cur[1]] + 1;
+						walkDist[cur[0] + y][cur[1] + x] = walkDist[cur[0]][cur[1]] + 1;
 						int po[] = { cur[0] + y , cur[1] + x };
-						push( &q , po , dist[cur[0] + y][cur[1] + x] );
+						push( &q , po , walkDist[cur[0] + y][cur[1] + x] );
 					}
 				}
 			}
 		}
 	}
 
-	return dist;
+
+	return walkDist;
 }
+
 

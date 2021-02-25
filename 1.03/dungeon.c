@@ -9,10 +9,13 @@
 #include <stdint.h>
 #include <endian.h>
 #include <unistd.h>
-#include "project1-02.h"
+#include "dungeon.h"
 
 
 int main(int argc, char *argv[]){
+
+ 
+
 
   srand(time(0));
   char *home = getenv("HOME");
@@ -51,6 +54,10 @@ int main(int argc, char *argv[]){
   }
   
   print_world(d.world);
+  
+  walkingDist();
+  printArr(d.walkDist);
+  
   clean_up();
   return 0;
   
@@ -404,6 +411,21 @@ void clean_up(){
   free(d.rooms);
 }
 
+void printArr(int arr[WORLD_HEIGHT][WORLD_WIDTH]){
+  int i, j;
+  for(j = 0; j < WORLD_HEIGHT; j++){
+    for(i = 0; i < WORLD_WIDTH; i++){
+      if(arr[j][i] == 0){
+	printf(" YES ");
+      }else{
+	 printf("%d ", arr[j][i]);
+      }
+    }
+    printf("\n");
+  }
+
+}
+
 Node* newNode(int x , int y , int p)
 {
     Node* temp = (Node*)malloc(sizeof(Node));
@@ -433,7 +455,7 @@ void push(Node** head, int d[2], int p)
 
     Node* temp = newNode( d[0] , d[1] , p );
     Node* start = (*head);
-    if ((*head)->prio > p)
+    if (((*head)->prio) > p)
     {
         temp->next = *head;
         (*head) = temp;
@@ -491,11 +513,11 @@ void boringDist()
 			{
 				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(d.boreDist[cur[0] + y][cur[1] + x] > d.boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 ) && hardness[cur[0] + y][cur[1] + x] < 255)
+					if(d.boreDist[cur[0] + y][cur[1] + x] > d.boreDist[cur[0]][cur[1]] + 1 + (d.hardness[cur[0] + y][cur[1] + x] / 85 ) && d.hardness[cur[0] + y][cur[1] + x] < 255)
 					{
-						d.boreDist[cur[0] + y][cur[1] + x] = d.boreDist[cur[0]][cur[1]] + 1 + (hardness[cur[0] + y][cur[1] + x] / 85 );
+						d.boreDist[cur[0] + y][cur[1] + x] = d.boreDist[cur[0]][cur[1]] + 1 + (d.hardness[cur[0] + y][cur[1] + x] / 85 );
 						int po[] = { cur[0] + y , cur[1] + x };
-						push( &q , po , boreDist[cur[0] + y][cur[1] + x] );
+						push( &q , po , d.boreDist[cur[0] + y][cur[1] + x] );
 					}
 				}
 			}
@@ -508,8 +530,9 @@ void boringDist()
 
 void walkingDist()
 {
+   printf("CHECK");
 	Node* q = newNode( pc.x , pc.y , 0 );
-
+	printf("Player: %d, %d", pc.x, pc.y);
 	int i;
 	int j;
 
@@ -522,7 +545,7 @@ void walkingDist()
 	}
 
 	d.walkDist[pc.x][pc.y] = 0;
-
+	
 	while(!isEmpty(&q))
 	{
 		int cur[2];
@@ -541,7 +564,8 @@ void walkingDist()
 			{
 				if( (cur[0] + y) < 21 && (cur[0] + y) >= 0 && (cur[1] + x) >= 0 && (cur[1] + x) < 80 )
 				{
-					if(d.walkDist[cur[0] + y][cur[1] + x] > d.walkDist[cur[0]][cur[1]] + 1 && world[cur[0] + y][cur[1] + x] >= 1)
+				 
+					if(d.walkDist[cur[0] + y][cur[1] + x] > d.walkDist[cur[0]][cur[1]] + 1 && d.world[cur[0] + y][cur[1] + x] >= 1)
 					{
 						d.walkDist[cur[0] + y][cur[1] + x] = d.walkDist[cur[0]][cur[1]] + 1;
 						int po[] = { cur[0] + y , cur[1] + x };

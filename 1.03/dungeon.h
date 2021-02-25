@@ -61,7 +61,7 @@ void save_file(char *filePath);
 void load_file(char *filePath);
 void generate_random();
 void clean_up();
-
+void printArr(int arr[WORLD_HEIGHT][WORLD_WIDTH]);
 Node* newNode(int x , int y , int p);
 int * peek(Node** head);
 void pop(Node** head);

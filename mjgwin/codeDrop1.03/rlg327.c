@@ -93,6 +93,7 @@ typedef struct dungeon {
    * of overhead to the memory system.                                    */
   uint8_t hardness[DUNGEON_Y][DUNGEON_X];
   uint8_t walkdist[DUNGEON_Y][DUNGEON_X];
+  uint8_t boredist[DUNGEON_Y][DUNGEON_X];
   pair_t pc;
 } dungeon_t;
 
@@ -308,6 +309,86 @@ static void dijkstra_walk(dungeon_t *d, pair_t from)
   }
 }
 
+static void dijkstra_bore(dungeon_t *d, pair_t from)
+{
+  static corridor_path_t path[DUNGEON_Y][DUNGEON_X], *p;
+  static uint32_t initialized = 0;
+  heap_t h;
+  uint32_t x, y;
+
+  if (!initialized) {
+    for (y = 0; y < DUNGEON_Y; y++) {
+      for (x = 0; x < DUNGEON_X; x++) {
+        path[y][x].pos[dim_y] = y;
+        path[y][x].pos[dim_x] = x;
+      }
+    }
+    initialized = 1;
+  }
+  
+  for (y = 0; y < DUNGEON_Y; y++) {
+    for (x = 0; x < DUNGEON_X; x++) {
+      path[y][x].cost = INT_MAX;
+    }
+  }
+
+  path[from[dim_y]][from[dim_x]].cost = 0;
+
+  heap_init(&h, corridor_path_cmp, NULL);
+
+  for (y = 0; y < DUNGEON_Y; y++) {
+    for (x = 0; x < DUNGEON_X; x++) {
+      if (mapxy(x, y) != ter_wall_immutable) {
+        path[y][x].hn = heap_insert(&h, &path[y][x]);
+      } else {
+        path[y][x].hn = NULL;
+      }
+    }
+  }
+
+  while ((p = heap_remove_min(&h))) {
+    p->hn = NULL;
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x]    ].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] - 1][p->pos[dim_x]    ].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x]    ].hn);
+    }
+    if ((path[p->pos[dim_y]    ][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] - 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y]    ][p->pos[dim_x] - 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y]    ][p->pos[dim_x] - 1].hn);
+    }
+    if ((path[p->pos[dim_y]    ][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] + 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y]    ][p->pos[dim_x] + 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y]    ][p->pos[dim_x] + 1].hn);
+    }
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x]    ].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] + 1][p->pos[dim_x]    ].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x]    ].hn);
+    }
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].hn);
+    }
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].hn);
+    }
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].hn);
+    }
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].cost > p->cost + (1 + (hardnesspair(p->pos) / 85)))) {
+      path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].cost = p->cost + (1 + (hardnesspair(p->pos) / 85));
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].hn);
+    }
+    
+    int i, j;
+    for(j = 0; j < DUNGEON_Y; j++) {
+      for(i = 0; i < DUNGEON_X; i++) {
+        d->boredist[j][i] = path[j][i].cost;
+      }
+    }
+  }
+}
 /* This is a cut-and-paste of the above.  The code is modified to  *
  * calculate paths based on inverse hardnesses so that we get a    *
  * high probability of creating at least one cycle in the dungeon. */
@@ -1451,8 +1532,10 @@ int main(int argc, char *argv[])
 
   render_dungeon(&d);
   dijkstra_walk(&d, d.pc);
+  dijkstra_bore(&d, d.pc);
   
     int k, j;
+    printf("Non-tunneling Monster Distance Map\n");
     for(j = 0; j < DUNGEON_Y; j++) {
       for(k = 0; k < DUNGEON_X; k++) {
         if (j == d.pc[dim_y] && k == d.pc[dim_x]) printf("@");
@@ -1462,6 +1545,17 @@ int main(int argc, char *argv[])
         }
         else {
           printf(" ");
+        }
+      }
+      printf("\n");
+    }
+    printf("Tunneling Monsters Distance Map\n\n");
+    for(j = 1; j < DUNGEON_Y - 1; j++) {
+      for(k = 1; k < DUNGEON_X - 1; k++) {
+        if (j == d.pc[dim_y] && k == d.pc[dim_x]) printf("@");
+        else{
+          //printf("0");
+          printf("%d", d.boredist[j][k] % 10);
         }
       }
       printf("\n");

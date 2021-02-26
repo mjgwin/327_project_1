@@ -92,6 +92,7 @@ typedef struct dungeon {
    * and pulling in unnecessary data with each map cell would add a lot   *
    * of overhead to the memory system.                                    */
   uint8_t hardness[DUNGEON_Y][DUNGEON_X];
+  uint8_t walkdist[DUNGEON_Y][DUNGEON_X];
   pair_t pc;
 } dungeon_t;
 
@@ -226,7 +227,7 @@ static void dijkstra_corridor(dungeon_t *d, pair_t from, pair_t to)
 
 
 
-static void dijkstra_walk(dungeon_t *d, pair_t from, pair_t to)
+static void dijkstra_walk(dungeon_t *d, pair_t from)
 {
   static corridor_path_t path[DUNGEON_Y][DUNGEON_X], *p;
   static uint32_t initialized = 0;
@@ -265,21 +266,44 @@ static void dijkstra_walk(dungeon_t *d, pair_t from, pair_t to)
 
   while ((p = heap_remove_min(&h))) {
     p->hn = NULL;
-    if ((path[p->pos[dim_y] - 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x]    ].cost > p->cost + hardnesspair(p->pos))) {
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x]    ].cost > p->cost + 1)) {
       path[p->pos[dim_y] - 1][p->pos[dim_x]    ].cost = p->cost + hardnesspair(p->pos);
       heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x]    ].hn);
     }
-    if ((path[p->pos[dim_y]    ][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] - 1].cost > p->cost + hardnesspair(p->pos))) {
+    if ((path[p->pos[dim_y]    ][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] - 1].cost > p->cost + 1)) {
       path[p->pos[dim_y]    ][p->pos[dim_x] - 1].cost = p->cost + hardnesspair(p->pos);
       heap_decrease_key_no_replace(&h, path[p->pos[dim_y]    ][p->pos[dim_x] - 1].hn);
     }
-    if ((path[p->pos[dim_y]    ][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] + 1].cost > p->cost + hardnesspair(p->pos))) {
+    if ((path[p->pos[dim_y]    ][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y]    ][p->pos[dim_x] + 1].cost > p->cost + 1)) {
       path[p->pos[dim_y]    ][p->pos[dim_x] + 1].cost = p->cost + hardnesspair(p->pos);
       heap_decrease_key_no_replace(&h, path[p->pos[dim_y]    ][p->pos[dim_x] + 1].hn);
     }
-    if ((path[p->pos[dim_y] + 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x]    ].cost > p->cost + hardnesspair(p->pos))) {
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x]    ].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x]    ].cost > p->cost + 1)) {
       path[p->pos[dim_y] + 1][p->pos[dim_x]    ].cost = p->cost + hardnesspair(p->pos);
       heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x]    ].hn);
+    }
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].cost > p->cost + 1)) {
+      path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].cost = p->cost + hardnesspair(p->pos);
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x] - 1].hn);
+    }
+    if ((path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].cost > p->cost + 1)) {
+      path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].cost = p->cost + hardnesspair(p->pos);
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] - 1][p->pos[dim_x] + 1].hn);
+    }
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].cost > p->cost + 1)) {
+      path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].cost = p->cost + hardnesspair(p->pos);
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x] - 1].hn);
+    }
+    if ((path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].hn) && (path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].cost > p->cost + 1)) {
+      path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].cost = p->cost + hardnesspair(p->pos);
+      heap_decrease_key_no_replace(&h, path[p->pos[dim_y] + 1][p->pos[dim_x] + 1].hn);
+    }
+    
+    int i, j;
+    for(j = 0; j < DUNGEON_Y; j++) {
+      for(i = 0; i < DUNGEON_X; i++) {
+        d->walkdist[j][i] = path[j][i].cost;
+      }
     }
   }
 }
@@ -1426,6 +1450,15 @@ int main(int argc, char *argv[])
   }
 
   render_dungeon(&d);
+  dijkstra_walk(&d, d.pc);
+  
+    int k, j;
+    for(j = 0; j < DUNGEON_Y; j++) {
+      for(k = 0; k < DUNGEON_X; k++) {
+        printf("%d\n", d.walkdist[j][k]);
+      }
+      printf("\n");
+    }
 
   if (do_save) {
     if (do_save_seed) {
@@ -1450,7 +1483,7 @@ int main(int argc, char *argv[])
       free(save_file);
     }
   }
-
+  
   delete_dungeon(&d);
 
   return 0;

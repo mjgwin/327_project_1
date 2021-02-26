@@ -105,38 +105,38 @@ static uint32_t is_open_space(123,3401
 static int32_t corridor_path_cmp(128,3500
 static void dijkstra_corridor(132,3650
 static void dijkstra_walk(230,7181
-static void dijkstra_corridor_inv(314,10895
-#define hardnesspair_inv(367,12217
-static int connect_two_rooms(417,14888
-static int create_cycle(436,15540
-static int connect_rooms(478,17105
-int gaussian[gaussian491,17298
-typedef struct queue_node 499,17454
-  int x,500,17482
-  int x, y;500,17482
-  struct queue_node *next;next501,17494
-} queue_node_t;502,17521
-static int smooth_hardness(504,17538
-static int empty_dungeon(663,21809
-static int place_rooms(682,22185
-static void place_stairs(719,23372
-static int make_rooms(741,24007
-int gen_dungeon(764,24570
-void render_dungeon(777,24732
-void delete_dungeon(817,25658
-void init_dungeon(822,25715
-int write_dungeon_map(827,25772
-int write_rooms(840,26001
-uint16_t count_up_stairs(862,26473
-uint16_t count_down_stairs(878,26724
-int write_stairs(894,26979
-uint32_t calculate_dungeon_size(926,27734
-int makedirectory(937,28205
-int write_dungeon(972,28841
-int read_dungeon_map(1038,30378
-int read_stairs(1061,30976
-int read_rooms(1084,31453
-int read_dungeon(1142,33379
-int read_pgm(1223,35238
-void usage(1308,37641
-int main(1318,37851
+static void dijkstra_corridor_inv(314,11223
+#define hardnesspair_inv(367,12545
+static int connect_two_rooms(417,15216
+static int create_cycle(436,15868
+static int connect_rooms(478,17433
+int gaussian[gaussian491,17626
+typedef struct queue_node 499,17782
+  int x,500,17810
+  int x, y;500,17810
+  struct queue_node *next;next501,17822
+} queue_node_t;502,17849
+static int smooth_hardness(504,17866
+static int empty_dungeon(663,22137
+static int place_rooms(682,22513
+static void place_stairs(719,23700
+static int make_rooms(741,24335
+int gen_dungeon(764,24898
+void render_dungeon(777,25060
+void delete_dungeon(817,25986
+void init_dungeon(822,26043
+int write_dungeon_map(827,26100
+int write_rooms(840,26329
+uint16_t count_up_stairs(862,26801
+uint16_t count_down_stairs(878,27052
+int write_stairs(894,27307
+uint32_t calculate_dungeon_size(926,28062
+int makedirectory(937,28533
+int write_dungeon(972,29169
+int read_dungeon_map(1038,30706
+int read_stairs(1061,31304
+int read_rooms(1084,31781
+int read_dungeon(1142,33707
+int read_pgm(1223,35566
+void usage(1308,37969
+int main(1318,38179

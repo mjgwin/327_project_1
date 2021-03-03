@@ -651,6 +651,23 @@ void render_dungeon(dungeon_t *d)
         case ter_stairs_down:
           putchar('>');
           break;
+        case ter_mon_1:
+        case ter_mon_2:
+        case ter_mon_3:
+        case ter_mon_4:
+        case ter_mon_5:
+        case ter_mon_6:
+        case ter_mon_7:
+        case ter_mon_8:
+        case ter_mon_9:
+        case ter_mon_a:
+          putchar('a');
+          break;
+        case ter_mon_b:
+        case ter_mon_c:
+        case ter_mon_d:
+        case ter_mon_e:
+        case ter_mon_f:
         default:
           break;
         }
@@ -1193,6 +1210,23 @@ void render_distance_map(dungeon_t *d)
           fprintf(stderr, "Debug character at %d, %d\n", p[dim_y], p[dim_x]);
           putchar('*');
           break;
+        case ter_mon_0:
+        case ter_mon_1:
+        case ter_mon_2:
+        case ter_mon_3:
+        case ter_mon_4:
+        case ter_mon_5:
+        case ter_mon_6:
+        case ter_mon_7:
+        case ter_mon_8:
+        case ter_mon_9:
+        case ter_mon_a:
+        case ter_mon_b:
+        case ter_mon_c:
+        case ter_mon_d:
+        case ter_mon_e:
+        case ter_mon_f:
+        ;
         }
       }
     }
@@ -1232,6 +1266,23 @@ void render_tunnel_distance_map(dungeon_t *d)
           fprintf(stderr, "Debug character at %d, %d\n", p[dim_y], p[dim_x]);
           putchar('*');
           break;
+        case ter_mon_0:
+        case ter_mon_1:
+        case ter_mon_2:
+        case ter_mon_3:
+        case ter_mon_4:
+        case ter_mon_5:
+        case ter_mon_6:
+        case ter_mon_7:
+        case ter_mon_8:
+        case ter_mon_9:
+        case ter_mon_a:
+        case ter_mon_b:
+        case ter_mon_c:
+        case ter_mon_d:
+        case ter_mon_e:
+        case ter_mon_f:
+        ;
         }
       }
     }

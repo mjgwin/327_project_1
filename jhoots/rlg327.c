@@ -6,6 +6,24 @@
 #include "dungeon.h"
 #include "path.h"
 
+typedef struct mon {
+  heap_node_t *hn;
+  pair_t position;
+  int32_t nextTurn;
+  int32_t speed;
+  int32_t prio;
+  int isPC;
+} mon_t;
+
+
+static int32_t mon_cmp(const void *key, const void *with) {
+  int32_t cmp = ((mon_t *) key)->nextTurn - ((mon_t *) with)->nextTurn;
+  if (cmp == 0) {
+    cmp = ((mon_t *) key)->prio - ((mon_t *) with)->prio;
+  }
+  return cmp;
+}
+
 void usage(char *name)
 {
   fprintf(stderr,
@@ -16,6 +34,39 @@ void usage(char *name)
   exit(-1);
 }
 
+void monster_loop(dungeon_t *d){
+  heap_t h;
+  heap_init(&h, mon_cmp, NULL);
+  
+  mon_t currMon[2];
+  
+  currMon[0].position[dim_y] = d->pc.position[dim_y];
+  currMon[0].position[dim_x] = d->pc.position[dim_x];
+  currMon[0].isPC = 1;
+  currMon[0].nextTurn = 0;
+  currMon[0].speed = 10;
+  currMon[0].prio = 0;
+  
+  currMon[0].hn = heap_insert(&h, &currMon[0]);
+  
+  currMon[1].position[dim_y] = d->rooms[5].position[dim_y];
+  currMon[1].position[dim_x] = d->rooms[5].position[dim_x];
+  currMon[1].isPC = 0;
+  currMon[1].nextTurn = 0;
+  currMon[1].speed = 10;
+  currMon[1].prio = 1;
+  mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_a;
+  
+  currMon[1].hn = heap_insert(&h, &currMon[1]);
+  
+
+  
+  
+  //print_heap(&h, NULL);
+  
+  
+  
+} 
 int main(int argc, char *argv[])
 {
   dungeon_t d;
@@ -154,10 +205,13 @@ int main(int argc, char *argv[])
   printf("PC is at (y, x): %d, %d\n",
          d.pc.position[dim_y], d.pc.position[dim_x]);
 
-  render_dungeon(&d);
+  
 
   dijkstra(&d);
   dijkstra_tunnel(&d);
+  monster_loop(&d);
+  
+  render_dungeon(&d);
   //render_distance_map(&d);
   //render_tunnel_distance_map(&d);
   //render_hardness_map(&d);

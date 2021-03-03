@@ -2,6 +2,8 @@
 #include <string.h>
 #include <sys/time.h>
 #include <stdlib.h>
+#include <limits.h>
+#include <unistd.h>
 
 #include "dungeon.h"
 #include "path.h"
@@ -13,6 +15,8 @@ typedef struct mon {
   int32_t speed;
   int32_t prio;
   int isPC;
+  char c;
+  int prev;
 } mon_t;
 
 
@@ -46,6 +50,7 @@ void monster_loop(dungeon_t *d){
   currMon[0].nextTurn = 0;
   currMon[0].speed = 10;
   currMon[0].prio = 0;
+  currMon[0].c = '@';
   
   currMon[0].hn = heap_insert(&h, &currMon[0]);
   
@@ -53,20 +58,98 @@ void monster_loop(dungeon_t *d){
   currMon[1].position[dim_x] = d->rooms[5].position[dim_x];
   currMon[1].isPC = 0;
   currMon[1].nextTurn = 0;
-  currMon[1].speed = 10;
+  currMon[1].speed = 20;
   currMon[1].prio = 1;
+  currMon[1].c = 'a';
+  currMon[1].prev = mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]);
   mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_a;
   
   currMon[1].hn = heap_insert(&h, &currMon[1]);
-  
+  render_distance_map(d);
+  render_dungeon(d);
 
   
   
+  
+  mon_t *removed = malloc(sizeof(mon_t));
+  while(1) {
+    removed = (mon_t *) heap_remove_min(&h);
+    char is = removed->c;
+    int x, y;
+    if (is == '@') {
+      printf("removed PC from heap\n\n");
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      usleep(250000);
+    }
+    else if (is == '0') {
+    }
+    else if (is == '1') {
+    }
+    else if (is == '2') {
+    }
+    else if (is == '3') {
+    }
+    else if (is == '4') {
+    }
+    else if (is == '5') {
+    }
+    else if (is == '6') {
+    }
+    else if (is == '7') {
+    }
+    else if (is == '8') {
+    }
+    else if (is == '9') {
+    }
+    else if (is == 'a') {
+      printf("removed monster from heap\n");
+        pair_t pMin;
+        int iMin = INT_MAX;
+        for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
+          for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
+            if(d->pc_distance[y][x] < iMin) {
+              iMin = d->pc_distance[y][x];
+              pMin[dim_x] = x;
+              pMin[dim_y] = y;
+            }
+          }
+        }
+        mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+        removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+        mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_a;
+        
+        removed->position[dim_x] = pMin[dim_x];
+        removed->position[dim_y] = pMin[dim_y];
+        removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+        removed->hn = heap_insert(&h, removed);
+        if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+          d->pc.position[dim_x] = -1;
+          d->pc.position[dim_y] = -1;
+          render_dungeon(d);
+          break;
+        }
+        render_dungeon(d);
+    }
+    else if (is == 'b') {
+    }
+    else if (is == 'c') {
+    }
+    else if (is == 'd') {
+    }
+    else if (is == 'e') {
+    }
+    else if (is == 'f') {
+    }
+    else {
+      printf("ERROR ERROR ERROR\n");
+    }
+    
+  }
   //print_heap(&h, NULL);
-  
-  
-  
 } 
+
+
 int main(int argc, char *argv[])
 {
   dungeon_t d;
@@ -211,7 +294,7 @@ int main(int argc, char *argv[])
   dijkstra_tunnel(&d);
   monster_loop(&d);
   
-  render_dungeon(&d);
+  //render_dungeon(&d);
   //render_distance_map(&d);
   //render_tunnel_distance_map(&d);
   //render_hardness_map(&d);

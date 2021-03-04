@@ -651,6 +651,9 @@ void render_dungeon(dungeon_t *d)
         case ter_stairs_down:
           putchar('>');
           break;
+        case ter_mon_0:
+          putchar('0');
+          break;
         case ter_mon_1:
         case ter_mon_2:
         case ter_mon_3:

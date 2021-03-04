@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "dungeon.h"
 #include "path.h"
@@ -59,23 +60,23 @@ void monster_loop(dungeon_t *d){
   currMon[1].prio = 1;
   currMon[1].c = 'a';
   currMon[1].prev = mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]);
-  mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_a;
-  currMon[1].hn = heap_insert(&h, &currMon[1]);
+  //mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_a;
+  //currMon[1].hn = heap_insert(&h, &currMon[1]);
   
   currMon[2].position[dim_y] = 1;
   currMon[2].position[dim_x] = 1;
   currMon[2].nextTurn = 0;
   currMon[2].speed = 20;
   currMon[2].prio = 2;
-  currMon[2].c = '0';
+  currMon[2].c = 'e';
   currMon[2].prev = mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]);
-  mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]) = ter_mon_0;
+  mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]) = ter_mon_e;
   currMon[2].hn = heap_insert(&h, &currMon[2]);
   dijkstra(d);
   dijkstra_tunnel(d);
   render_dungeon(d);
 
-  
+  srand(time(0));
   
   mon_t *removed = malloc(sizeof(mon_t));
   while(1) {
@@ -89,6 +90,124 @@ void monster_loop(dungeon_t *d){
       usleep(250000);
     }
     else if (is == '0') {
+    }
+    else if (is == '1') {
+    }
+    else if (is == '2') {
+      pair_t pMin;
+      pMin[dim_x] = removed->position[dim_x];
+      pMin[dim_y] = removed->position[dim_y];
+      if(removed->position[dim_x] < d->pc.position[dim_x]) {
+        ++pMin[dim_x];
+      }
+      else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+        --pMin[dim_x];
+      }
+      
+      if(removed->position[dim_y] < d->pc.position[dim_y]) {
+        ++pMin[dim_y];
+      }
+      else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+        --pMin[dim_y];
+      }
+      
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+        mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+        removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+        mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_2;
+        removed->position[dim_x] = pMin[dim_x];
+        removed->position[dim_y] = pMin[dim_y];
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      } 
+    }
+    else if (is == '3') {
+      pair_t pMin;
+      int iMin = INT_MAX;
+      for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
+        for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
+          if(d->pc_distance[y][x] < iMin) {
+            iMin = d->pc_distance[y][x];
+            pMin[dim_x] = x;
+            pMin[dim_y] = y;
+          }
+        }
+      }
+      mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+      removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+      mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_3;
+      removed->position[dim_x] = pMin[dim_x];
+      removed->position[dim_y] = pMin[dim_y];
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
+    }
+    else if (is == '4') {
+    }
+    else if (is == '5') {
+    }
+    else if (is == '6') {
+      pair_t pMin;
+      pMin[dim_x] = removed->position[dim_x];
+      pMin[dim_y] = removed->position[dim_y];
+      if(removed->position[dim_x] < d->pc.position[dim_x]) {
+        ++pMin[dim_x];
+      }
+      else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+        --pMin[dim_x];
+      }
+      
+      if(removed->position[dim_y] < d->pc.position[dim_y]) {
+        ++pMin[dim_y];
+      }
+      else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+        --pMin[dim_y];
+      }
+      
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] > 85) {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = d->hardness[pMin[dim_y]][pMin[dim_x]] - 85;
+        dijkstra_tunnel(d);
+      }
+      else {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = 0;
+        if (removed->prev == ter_wall) {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = ter_floor_hall;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_6;
+          dijkstra(d);
+          dijkstra_tunnel(d);
+        }
+        else {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_6;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+        }
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
+    }
+    else if (is == '7') {
       pair_t pMin;
       int iMin = INT_MAX;
       for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
@@ -108,19 +227,18 @@ void monster_loop(dungeon_t *d){
       else {
         d->hardness[pMin[dim_y]][pMin[dim_x]] = 0;
         if (removed->prev == ter_wall) {
-          printf("made it here too\n"); //possibly change to ter_wall_immutable
           mapxy(removed->position[dim_x], removed->position[dim_y]) = ter_floor_hall;
           removed->position[dim_x] = pMin[dim_x];
           removed->position[dim_y] = pMin[dim_y];
           removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
-          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_0;
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_7;
           dijkstra(d);
           dijkstra_tunnel(d);
         }
         else {
           mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
           removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
-          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_0;
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_7;
           removed->position[dim_x] = pMin[dim_x];
           removed->position[dim_y] = pMin[dim_y];
         }
@@ -128,66 +246,229 @@ void monster_loop(dungeon_t *d){
       removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
       removed->hn = heap_insert(&h, removed);
       if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
-        d->pc.position[dim_x] = -1;
-        d->pc.position[dim_y] = -1;
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
         render_dungeon(d);
         break;
       }
-    }
-    else if (is == '1') {
-    }
-    else if (is == '2') {
-    }
-    else if (is == '3') {
-    }
-    else if (is == '4') {
-    }
-    else if (is == '5') {
-    }
-    else if (is == '6') {
-    }
-    else if (is == '7') {
     }
     else if (is == '8') {
     }
     else if (is == '9') {
     }
     else if (is == 'a') {
+      int erratic = rand() % 2;
       pair_t pMin;
-      int iMin = INT_MAX;
-      for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
-        for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
-          if(d->pc_distance[y][x] < iMin) {
-            iMin = d->pc_distance[y][x];
-            pMin[dim_x] = x;
-            pMin[dim_y] = y;
+      if (erratic) {
+        printf("erratic behavior selected\n");
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if(pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) {
+            continue;
+          }
+          if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+            break;
           }
         }
+        printf("x: %d, y: %d\n", removed->position[dim_x], removed->position[dim_y]);
+        printf("x: %d, y: %d\n", pMin[dim_x], pMin[dim_y]); 
+      } else {
+        pMin[dim_x] = removed->position[dim_x];
+        pMin[dim_y] = removed->position[dim_y];
+        if(removed->position[dim_x] < d->pc.position[dim_x]) {
+          ++pMin[dim_x];
+        }
+        else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+          --pMin[dim_x];
+        }
+      
+        if(removed->position[dim_y] < d->pc.position[dim_y]) {
+          ++pMin[dim_y];
+        }
+        else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+          --pMin[dim_y];
+        }
       }
-      mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
-      removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
-      mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_a;
-        
-      removed->position[dim_x] = pMin[dim_x];
-      removed->position[dim_y] = pMin[dim_y];
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+        mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+        removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+        mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_a;
+        removed->position[dim_x] = pMin[dim_x];
+        removed->position[dim_y] = pMin[dim_y];
+      }
       removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
       removed->hn = heap_insert(&h, removed);
       if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
-        d->pc.position[dim_x] = -1;
-        d->pc.position[dim_y] = -1;
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
         render_dungeon(d);
         break;
       }
     }
     else if (is == 'b') {
+      int erratic = rand() % 2;
+      pair_t pMin;
+      int iMin = INT_MAX;
+      if (erratic) {
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if(pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) {
+            continue;
+          }
+          if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+            break;
+          }
+        }
+      } else {
+        for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
+          for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
+            if(d->pc_distance[y][x] < iMin) {
+              iMin = d->pc_distance[y][x];
+              pMin[dim_x] = x;
+              pMin[dim_y] = y;
+            }
+          }
+        }
+      }
+      mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+      removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+      mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_b;
+      removed->position[dim_x] = pMin[dim_x];
+      removed->position[dim_y] = pMin[dim_y];
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == 'c') {
     }
     else if (is == 'd') {
     }
     else if (is == 'e') {
+      int erratic = rand() % 2;
+      pair_t pMin;
+      if (erratic) {
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if((pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) || pMin[dim_x] <= 0 || pMin[dim_x] >= DUNGEON_X - 1 || pMin[dim_y] <= 0 || pMin[dim_y] >= DUNGEON_Y - 1) {
+            continue;
+          }
+          break;
+        }
+      } else {
+        pMin[dim_x] = removed->position[dim_x];
+        pMin[dim_y] = removed->position[dim_y];
+        if(removed->position[dim_x] < d->pc.position[dim_x]) {
+          ++pMin[dim_x];
+        }
+        else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+          --pMin[dim_x];
+        }
+      
+        if(removed->position[dim_y] < d->pc.position[dim_y]) {
+          ++pMin[dim_y];
+        }
+        else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+          --pMin[dim_y];
+        }
+      }
+      
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] > 85) {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = d->hardness[pMin[dim_y]][pMin[dim_x]] - 85;
+        dijkstra_tunnel(d);
+      }
+      else {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = 0;
+        if (removed->prev == ter_wall) {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = ter_floor_hall;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_e;
+          dijkstra(d);
+          dijkstra_tunnel(d);
+        }
+        else {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_e;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+        }
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == 'f') {
+      int erratic = rand() % 2;
+      pair_t pMin;
+      int iMin = INT_MAX;
+      if (erratic) {
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if((pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) || pMin[dim_x] <= 0 || pMin[dim_x] >= DUNGEON_X - 1 || pMin[dim_y] <= 0 || pMin[dim_y] >= DUNGEON_Y - 1) {
+            continue;
+          }
+          break;
+        }
+      } else {
+        for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
+          for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
+            if(d->pc_tunnel[y][x] < iMin) {
+              iMin = d->pc_tunnel[y][x];
+              pMin[dim_x] = x;
+              pMin[dim_y] = y;
+            }
+          }
+        }
+      }
+      
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] > 85) {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = d->hardness[pMin[dim_y]][pMin[dim_x]] - 85;
+        dijkstra_tunnel(d);
+      }
+      else {
+        d->hardness[pMin[dim_y]][pMin[dim_x]] = 0;
+        if (removed->prev == ter_wall) {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = ter_floor_hall;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_f;
+          dijkstra(d);
+          dijkstra_tunnel(d);
+        }
+        else {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_f;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+        }
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
+      
     }
     else {
       printf("ERROR ERROR ERROR\n");

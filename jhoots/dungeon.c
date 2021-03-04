@@ -38,8 +38,8 @@ static uint32_t in_room(dungeon_t *d, int16_t y, int16_t x)
   }
 
   return 0;
-}
-*/
+}*/
+
 
 static uint32_t adjacent_to_room(dungeon_t *d, int16_t y, int16_t x)
 {
@@ -655,22 +655,50 @@ void render_dungeon(dungeon_t *d)
           putchar('0');
           break;
         case ter_mon_1:
+          putchar('1');
+          break;
         case ter_mon_2:
+          putchar('2');
+          break;
         case ter_mon_3:
+          putchar('3');
+          break;
         case ter_mon_4:
+          putchar('4');
+          break;
         case ter_mon_5:
+          putchar('5');
+          break;
         case ter_mon_6:
+          putchar('6');
+          break;
         case ter_mon_7:
+          putchar('7');
+          break;
         case ter_mon_8:
+          putchar('8');
+          break;
         case ter_mon_9:
+          putchar('9');
+          break;
         case ter_mon_a:
           putchar('a');
           break;
         case ter_mon_b:
+          putchar('b');
+          break;
         case ter_mon_c:
+          putchar('c');
+          break;
         case ter_mon_d:
+          putchar('d');
+          break;
         case ter_mon_e:
+          putchar('e');
+          break;
         case ter_mon_f:
+          putchar('f');
+          break;
         default:
           break;
         }

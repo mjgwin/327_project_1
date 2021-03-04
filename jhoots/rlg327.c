@@ -103,7 +103,6 @@ void monster_loop(dungeon_t *d){
     char is = removed->c;
     int x, y;
     if (is == '@') {
-      //d->pc.position[dim_y] = d->pc.position[dim_y] + 1;
       removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
       removed->hn = heap_insert(&h, removed);
       render_dungeon(d);
@@ -317,7 +316,6 @@ void monster_loop(dungeon_t *d){
         removed->memory[dim_y] = d->pc.position[dim_y];
         for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
           for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
-            printf("tunnelMap: %d\n", d->pc_tunnel[y][x]);
             if(d->pc_tunnel[y][x] < iMin) {
               iMin = d->pc_tunnel[y][x];
               pMin[dim_x] = x;
@@ -342,12 +340,6 @@ void monster_loop(dungeon_t *d){
           }
         }
       }
-      printf("x: %d, y: %d\n", removed->position[dim_x], removed->position[dim_y]);
-      printf("x: %d, y: %d\n", d->pc.position[dim_x], d->pc.position[dim_y]);
-      printf("x: %d, y: %d\n", removed->memory[dim_x], removed->memory[dim_y]);
-      printf("x: %d, y: %d\n", pMin[dim_x], pMin[dim_y]);
-      printf("Hardness: %d\n", d->hardness[pMin[dim_y]][pMin[dim_x]]);
-      render_tunnel_distance_map(d);
       if(d->hardness[pMin[dim_y]][pMin[dim_x]] > 85) {
         d->hardness[pMin[dim_y]][pMin[dim_x]] = d->hardness[pMin[dim_y]][pMin[dim_x]] - 85;
         dijkstra_tunnel(d);
@@ -528,7 +520,6 @@ void monster_loop(dungeon_t *d){
       int erratic = rand() % 2;
       pair_t pMin;
       if (erratic) {
-        printf("erratic beahavior\n");
         while(1) {
           pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
           pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
@@ -584,7 +575,6 @@ void monster_loop(dungeon_t *d){
       int erratic = rand() % 2;
       pair_t pMin;
       if (erratic) {
-        printf("erratic behavior selected\n");
         while(1) {
           pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
           pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
@@ -595,8 +585,6 @@ void monster_loop(dungeon_t *d){
             break;
           }
         }
-        printf("x: %d, y: %d\n", removed->position[dim_x], removed->position[dim_y]);
-        printf("x: %d, y: %d\n", pMin[dim_x], pMin[dim_y]); 
       } else {
         pMin[dim_x] = removed->position[dim_x];
         pMin[dim_y] = removed->position[dim_y];
@@ -765,7 +753,6 @@ void monster_loop(dungeon_t *d){
           removed->memory[dim_y] = d->pc.position[dim_y];
           for(y = removed->position[dim_y] - 1; y < removed->position[dim_y] + 2; y++) {
             for(x = removed->position[dim_x] - 1; x < removed->position[dim_x] + 2; x++) {
-              printf("tunnelMap: %d\n", d->pc_tunnel[y][x]);
               if(d->pc_tunnel[y][x] < iMin) {
                 iMin = d->pc_tunnel[y][x];
                 pMin[dim_x] = x;
@@ -791,12 +778,6 @@ void monster_loop(dungeon_t *d){
           }
         }
       }
-      
-      printf("x: %d, y: %d\n", removed->position[dim_x], removed->position[dim_y]);
-      printf("x: %d, y: %d\n", d->pc.position[dim_x], d->pc.position[dim_y]);
-      printf("x: %d, y: %d\n", removed->memory[dim_x], removed->memory[dim_y]);
-      printf("x: %d, y: %d\n", pMin[dim_x], pMin[dim_y]);
-      printf("Hardness: %d\n", d->hardness[pMin[dim_y]][pMin[dim_x]]);
       render_tunnel_distance_map(d);
       if(d->hardness[pMin[dim_y]][pMin[dim_x]] > 85) {
         d->hardness[pMin[dim_y]][pMin[dim_x]] = d->hardness[pMin[dim_y]][pMin[dim_x]] - 85;

@@ -12,6 +12,7 @@
 typedef struct mon {
   heap_node_t *hn;
   pair_t position;
+  pair_t memory;
   int32_t nextTurn;
   int32_t speed;
   int32_t prio;
@@ -38,6 +39,22 @@ void usage(char *name)
   exit(-1);
 }
 
+int in_room(dungeon_t *d, mon_t *mon)
+{
+  int i;
+  int inRoom;
+  for (i = 0; i < d->num_rooms; i++) {
+    if ((d->pc.position[dim_x] >= d->rooms[i].position[dim_x]) && (d->pc.position[dim_x] < (d->rooms[i].position[dim_x] + d->rooms[i].size[dim_x])) && (d->pc.position[dim_y] >= d->rooms[i].position[dim_y]) && (d->pc.position[dim_y] < (d->rooms[i].position[dim_y] + d->rooms[i].size[dim_y]))) {
+      inRoom = i;
+    }
+  }
+  
+  if ((mon->position[dim_x] >= d->rooms[inRoom].position[dim_x]) && (mon->position[dim_x] < (d->rooms[inRoom].position[dim_x] + d->rooms[inRoom].size[dim_x])) && (mon->position[dim_y] >= d->rooms[inRoom].position[dim_y]) && (mon->position[dim_y] < (d->rooms[inRoom].position[dim_y] + d->rooms[inRoom].size[dim_y]))) {
+      return 1;
+    }
+  return 0;
+}
+
 void monster_loop(dungeon_t *d){
   heap_t h;
   heap_init(&h, mon_cmp, NULL);
@@ -53,15 +70,15 @@ void monster_loop(dungeon_t *d){
   
   currMon[0].hn = heap_insert(&h, &currMon[0]);
   
-  currMon[1].position[dim_y] = d->rooms[5].position[dim_y];
-  currMon[1].position[dim_x] = d->rooms[5].position[dim_x];
+  currMon[1].position[dim_y] = d->rooms[0].position[dim_y];
+  currMon[1].position[dim_x] = d->rooms[0].position[dim_x];
   currMon[1].nextTurn = 0;
-  currMon[1].speed = 5;
+  currMon[1].speed = 10;
   currMon[1].prio = 1;
-  currMon[1].c = 'a';
+  currMon[1].c = '1';
   currMon[1].prev = mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]);
-  //mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_a;
-  //currMon[1].hn = heap_insert(&h, &currMon[1]);
+  mapxy(currMon[1].position[dim_x], currMon[1].position[dim_y]) = ter_mon_1;
+  currMon[1].hn = heap_insert(&h, &currMon[1]);
   
   currMon[2].position[dim_y] = 1;
   currMon[2].position[dim_x] = 1;
@@ -70,8 +87,8 @@ void monster_loop(dungeon_t *d){
   currMon[2].prio = 2;
   currMon[2].c = 'e';
   currMon[2].prev = mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]);
-  mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]) = ter_mon_e;
-  currMon[2].hn = heap_insert(&h, &currMon[2]);
+  //mapxy(currMon[2].position[dim_x], currMon[2].position[dim_y]) = ter_mon_e;
+  //currMon[2].hn = heap_insert(&h, &currMon[2]);
   dijkstra(d);
   dijkstra_tunnel(d);
   render_dungeon(d);
@@ -84,14 +101,87 @@ void monster_loop(dungeon_t *d){
     char is = removed->c;
     int x, y;
     if (is == '@') {
+      d->pc.position[dim_y] = d->pc.position[dim_y] + 1;
       removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
       removed->hn = heap_insert(&h, removed);
       render_dungeon(d);
-      usleep(250000);
+      usleep(1000000);
     }
     else if (is == '0') {
+      pair_t pMin;
+      pMin[dim_x] = removed->position[dim_x];
+      pMin[dim_y] = removed->position[dim_y];
+      if(in_room(d, removed)) {
+        if(removed->position[dim_x] < d->pc.position[dim_x]) {
+          ++pMin[dim_x];
+        }
+        else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+          --pMin[dim_x];
+        }
+      
+        if(removed->position[dim_y] < d->pc.position[dim_y]) {
+        ++pMin[dim_y];
+        }
+        else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+          --pMin[dim_y];
+        }
+        if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_0;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+        }
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == '1') {
+      pair_t pMin;
+      pMin[dim_x] = removed->position[dim_x];
+      pMin[dim_y] = removed->position[dim_y];
+      if(in_room(d, removed)) {
+        removed->memory[dim_x] = d->pc.position[dim_x];
+        removed->memory[dim_y] = d->pc.position[dim_y];
+      }
+      
+      if(removed->memory[dim_x] != removed->position[dim_x] || removed->memory[dim_y] != removed->position[dim_y]) {
+        if(removed->position[dim_x] < removed->memory[dim_x]) {
+          ++pMin[dim_x];
+        }
+        else if (removed->position[dim_x] > removed->memory[dim_x]) {
+          --pMin[dim_x];
+        }
+      
+        if(removed->position[dim_y] < removed->memory[dim_y]) {
+          ++pMin[dim_y];
+        }
+        else if (removed->position[dim_y] > removed->memory[dim_y]) {
+          --pMin[dim_y];
+        }
+        
+        if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+          mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+          removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+          mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_1;
+          removed->position[dim_x] = pMin[dim_x];
+          removed->position[dim_y] = pMin[dim_y];
+        }
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == '2') {
       pair_t pMin;
@@ -146,6 +236,12 @@ void monster_loop(dungeon_t *d){
       removed->position[dim_y] = pMin[dim_y];
       removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
       removed->hn = heap_insert(&h, removed);
+      if(in_room(d, removed)) {
+        printf("true\n");
+      }
+      else {
+        printf("false\n");
+      }
       if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
         d->pc.position[dim_x] = 0;
         d->pc.position[dim_y] = 0;
@@ -253,8 +349,109 @@ void monster_loop(dungeon_t *d){
       }
     }
     else if (is == '8') {
+      int erratic = rand() % 2;
+      pair_t pMin;
+      if (erratic) {
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if(pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) {
+            continue;
+          }
+          if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+            break;
+          }
+        } 
+      } else {
+        pMin[dim_x] = removed->position[dim_x];
+        pMin[dim_y] = removed->position[dim_y];
+        if(in_room(d, removed)) {
+          if(removed->position[dim_x] < d->pc.position[dim_x]) {
+            ++pMin[dim_x];
+          }
+          else if (removed->position[dim_x] > d->pc.position[dim_x]) {
+            --pMin[dim_x];
+          }
+      
+          if(removed->position[dim_y] < d->pc.position[dim_y]) {
+            ++pMin[dim_y];
+          }
+          else if (removed->position[dim_y] > d->pc.position[dim_y]) {
+            --pMin[dim_y];
+          } 
+        }
+      }
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+        mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+        removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+        mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_8;
+        removed->position[dim_x] = pMin[dim_x];
+        removed->position[dim_y] = pMin[dim_y];
+      }
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == '9') {
+      int erratic = rand() % 2;
+      pair_t pMin;
+      if (erratic) {
+        printf("erratic beahavior\n");
+        while(1) {
+          pMin[dim_x] = (rand() % 3) + (removed->position[dim_x] - 1);
+          pMin[dim_y] = (rand() % 3) + (removed->position[dim_y] - 1);
+          if(pMin[dim_x] == removed->position[dim_x] && pMin[dim_y] == removed->position[dim_y]) {
+            continue;
+          }
+          if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+            break;
+          }
+        } 
+      } else {
+        pMin[dim_x] = removed->position[dim_x];
+        pMin[dim_y] = removed->position[dim_y];
+        if(in_room(d, removed)) {
+          removed->memory[dim_x] = d->pc.position[dim_x];
+          removed->memory[dim_y] = d->pc.position[dim_y];
+        }
+      
+        if(removed->memory[dim_x] != removed->position[dim_x] || removed->memory[dim_y] != removed->position[dim_y]) {
+          if(removed->position[dim_x] < removed->memory[dim_x]) {
+            ++pMin[dim_x];
+          }
+          else if (removed->position[dim_x] > removed->memory[dim_x]) {
+            --pMin[dim_x];
+          }
+      
+          if(removed->position[dim_y] < removed->memory[dim_y]) {
+            ++pMin[dim_y];
+          }
+          else if (removed->position[dim_y] > removed->memory[dim_y]) {
+            --pMin[dim_y];
+          }
+        }
+      }  
+      if(d->hardness[pMin[dim_y]][pMin[dim_x]] == 0) {
+        mapxy(removed->position[dim_x], removed->position[dim_y]) = removed->prev;
+        removed->prev = mapxy(pMin[dim_x], pMin[dim_y]);
+        mapxy(pMin[dim_x], pMin[dim_y]) = ter_mon_9;
+        removed->position[dim_x] = pMin[dim_x];
+        removed->position[dim_y] = pMin[dim_y];
+      }
+      
+      removed->nextTurn = removed->nextTurn + (1000 / removed->speed);
+      removed->hn = heap_insert(&h, removed);
+      if(pMin[dim_x] == d->pc.position[dim_x] && pMin[dim_y] == d->pc.position[dim_y]) {
+        d->pc.position[dim_x] = 0;
+        d->pc.position[dim_y] = 0;
+        render_dungeon(d);
+        break;
+      }
     }
     else if (is == 'a') {
       int erratic = rand() % 2;

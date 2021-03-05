@@ -133,8 +133,7 @@ void generate_pc(dungeon_t *d){
 
 //dungeon, mon to generate, intelligence flag, telepathy flag, tunneling flag, erratic flag, priority
 void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint32_t tunn, uint32_t err, int prio){
-  printf("made it here\n");
-  srand(0);
+  //printf("made it here\n");
   int speed = (rand() % 15) + 5;
   mon->nextTurn = 0;
   mon->speed = speed;
@@ -143,68 +142,69 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
   if(!intel && !tele && !tunn && !err){
     mon->c = '0';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
+      
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && !tele && !tunn && err){
     mon->c = '1';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && !tele && tunn && !err){
     mon->c = '2';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && !tele && tunn && err){
     mon->c = '3';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && tele && !tunn && !err){
     mon->c = '4';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && tele && !tunn && err){
     mon->c = '5';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && tele && tunn && !err){
     mon->c = '6';
@@ -214,7 +214,7 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(!intel && tele && tunn && err){
     mon->c = '7';
@@ -224,45 +224,45 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && !tele && !tunn && !err){
     mon->c = '8';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && !tele && !tunn && err){
     mon->c = '9';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && !tele && tunn && !err){
     mon->c = 'a';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && !tele && tunn && err){
     mon->c = 'b';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
@@ -273,24 +273,24 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
   }else if(intel && tele && !tunn && !err){
     mon->c = 'c';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && tele && !tunn && err){
     mon->c = 'd';
     while(1) {
-      int currRoom = (rand() % d->num_rooms) + 1;
+      int currRoom = (rand() % (d->num_rooms - 1)) + 1;
       mon->position[dim_y] = d->rooms[currRoom].position[dim_y] + (rand() % d->rooms[currRoom].size[dim_y]);
       mon->position[dim_x] = d->rooms[currRoom].position[dim_x] + (rand() % d->rooms[currRoom].size[dim_x]);
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && tele && tunn && !err){
     mon->c = 'e';
@@ -300,7 +300,7 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }else if(intel && tele && tunn && err){
     mon->c = 'f';
@@ -310,7 +310,7 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
       mon->memory[dim_y] = mon->position[dim_y];
       mon->memory[dim_x] = mon->position[dim_x];
       mon->id = set_mon_id(mon);
-      if(overlaps_with_any(d, mon, prio)) break;
+      if(!overlaps_with_any(d, mon, prio)) break;
     }
   }
   
@@ -340,12 +340,11 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
   mon->memory[dim_x] = mon->position[dim_x];
 
   mon->id = set_mon_id(mon);*/
-  printf("also made it here\n");
+  //printf("also made it here\n");
 }
 
 void generate_mons(dungeon_t *d, int numMons){
   //Plus 1 for player mon
-  srand(0);
   printf("made it here\n");
   d->num_mons = numMons + 1;
   d->mons = malloc(sizeof(mon_t) * (numMons + 1));

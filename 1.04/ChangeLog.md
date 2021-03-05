@@ -1,4 +1,4 @@
-2/22 Using the 1.02 code drop, began implementation of Dijkstra's for non tunneling<br />
-2/23 Finished non tunneling with expected output and bug fixes<br />
-2/24 Worked on tunneling and printing both new maps to screen<br />
-2/25 Bugfixes for final submission
+2/28 Using the 1.03 code drop, began implementation of monster generation and movement<br />
+3/1 Finished monster generation and arg parsing<br />
+3/2 Bug fixes and continued working on making certain monsters move correctly. Started working on collisions<br />
+3/4 Implemented collision between monsters

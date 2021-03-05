@@ -12,6 +12,7 @@
 #define ROOM_MIN_Y             3
 #define ROOM_MAX_X             20
 #define ROOM_MAX_Y             15
+#define DEFAULT_MONS           10
 #define SAVE_DIR               ".rlg327"
 #define DUNGEON_SAVE_FILE      "dungeon"
 #define DUNGEON_SAVE_SEMANTIC  "RLG327-" TERM
@@ -50,6 +51,19 @@ typedef enum __attribute__ ((__packed__)) terrain_type {
   ter_mon_f
 } terrain_type_t;
 
+
+typedef struct mon {
+  heap_node_t *hn;
+  pair_t position;
+  pair_t memory;
+  int32_t nextTurn;
+  int32_t speed;
+  int32_t prio;
+  char c;
+  int prev;
+  terrain_type_t id;
+} mon_t;
+
 typedef struct room {
   pair_t position;
   pair_t size;
@@ -63,7 +77,9 @@ typedef struct pc {
 
 typedef struct dungeon {
   uint32_t num_rooms;
+  uint32_t num_mons;
   room_t *rooms;
+  mon_t *mons;
   terrain_type_t map[DUNGEON_Y][DUNGEON_X];
   /* Since hardness is usually not used, it would be expensive to pull it *
    * into cache every time we need a map cell, so we store it in a        *

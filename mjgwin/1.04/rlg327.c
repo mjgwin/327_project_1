@@ -45,6 +45,60 @@ void usage(char *name)
   exit(-1);
 }
 
+terrain_type_t set_mon_id(mon_t *mon){
+  switch(mon->c){
+  case '0':
+     return ter_mon_0;
+     break;
+  case '1':
+     return ter_mon_1;
+     break;
+  case '2':
+     return ter_mon_2;
+     break;
+  case '3':
+     return ter_mon_3;
+     break;
+  case '4':
+     return ter_mon_4;
+     break;
+  case '5':
+     return ter_mon_5;
+     break;
+  case '6':
+     return ter_mon_6;
+     break;
+  case '7':
+     return ter_mon_7;
+     break;
+  case '8':
+     return ter_mon_8;
+     break;
+  case '9':
+     return ter_mon_9;
+     break;
+  case 'a':
+     return ter_mon_a;
+     break;
+  case 'b':
+     return ter_mon_b;
+     break;
+  case 'c':
+     return ter_mon_c;
+     break;
+  case 'd':
+     return ter_mon_d;
+     break;
+  case 'e':
+     return ter_mon_e;
+     break;
+  case 'f':
+     return ter_mon_f;
+     break;
+  }
+  return ter_mon_0;
+}
+
 int mons_overlap(mon_t *first, mon_t *second){
   return first->position[dim_y] ==  second->position[dim_y] &&
     first->position[dim_x] == second->position[dim_x]; 
@@ -135,6 +189,8 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
   
   mon->memory[dim_y] = mon->position[dim_y];
   mon->memory[dim_x] = mon->position[dim_x];
+
+  mon->id = set_mon_id(mon);
 }
 
 void generate_mons(dungeon_t *d, int numMons){
@@ -163,7 +219,7 @@ void monster_loop(dungeon_t *d){
   for(currMon = 0; currMon < d->num_mons; currMon++){
     mon_t *temp = &d->mons[currMon];
     temp->prev = mapxy(temp->position[dim_x], temp->position[dim_y]);
-    mapxy(temp->position[dim_x], temp->position[dim_y]) = temp->c;
+    mapxy(temp->position[dim_x], temp->position[dim_y]) = temp->id;
     temp->hn = heap_insert(&h, temp);
   }
    

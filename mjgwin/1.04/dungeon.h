@@ -61,6 +61,7 @@ typedef struct mon {
   int32_t prio;
   char c;
   int prev;
+  terrain_type_t id;
 } mon_t;
 
 typedef struct room {

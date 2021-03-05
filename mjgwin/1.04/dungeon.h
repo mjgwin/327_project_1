@@ -12,6 +12,7 @@
 #define ROOM_MIN_Y             3
 #define ROOM_MAX_X             20
 #define ROOM_MAX_Y             15
+#define DEFAULT_MONS           10
 #define SAVE_DIR               ".rlg327"
 #define DUNGEON_SAVE_FILE      "dungeon"
 #define DUNGEON_SAVE_SEMANTIC  "RLG327-" TERM
@@ -54,6 +55,7 @@ typedef enum __attribute__ ((__packed__)) terrain_type {
 typedef struct mon {
   heap_node_t *hn;
   pair_t position;
+  pair_t memory;
   int32_t nextTurn;
   int32_t speed;
   int32_t prio;

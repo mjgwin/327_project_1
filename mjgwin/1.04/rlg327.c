@@ -19,6 +19,22 @@ static int32_t mon_cmp(const void *key, const void *with) {
   return cmp;
 }
 
+int in_room(dungeon_t *d, mon_t *mon)
+{
+  int i;
+  int inRoom;
+  for (i = 0; i < d->num_rooms; i++) {
+    if ((d->pc.position[dim_x] >= d->rooms[i].position[dim_x]) && (d->pc.position[dim_x] < (d->rooms[i].position[dim_x] + d->rooms[i].size[dim_x])) && (d->pc.position[dim_y] >= d->rooms[i].position[dim_y]) && (d->pc.position[dim_y] < (d->rooms[i].position[dim_y] + d->rooms[i].size[dim_y]))) {
+      inRoom = i;
+    }
+  }
+  
+  if ((mon->position[dim_x] >= d->rooms[inRoom].position[dim_x]) && (mon->position[dim_x] < (d->rooms[inRoom].position[dim_x] + d->rooms[inRoom].size[dim_x])) && (mon->position[dim_y] >= d->rooms[inRoom].position[dim_y]) && (mon->position[dim_y] < (d->rooms[inRoom].position[dim_y] + d->rooms[inRoom].size[dim_y]))) {
+      return 1;
+    }
+  return 0;
+}
+
 void usage(char *name)
 {
   fprintf(stderr,
@@ -27,6 +43,23 @@ void usage(char *name)
           name);
 
   exit(-1);
+}
+
+int mons_overlap(mon_t *first, mon_t *second){
+  return first->position[dim_y] ==  second->position[dim_y] &&
+    first->position[dim_x] == second->position[dim_x]; 
+}
+
+int overlaps_with_any(dungeon_t *d, mon_t *mon){
+  int i;
+  for(i = 0; i < d->num_mons; i++){
+    mon_t *temp = &d->mons[i];
+    if(mons_overlap(mon, temp)){
+      return 1;
+    }
+  }
+
+  return 0;
 }
 
 
@@ -42,47 +75,66 @@ void generate_pc(dungeon_t *d){
 
 //dungeon, mon to generate, intelligence flag, telepathy flag, tunneling flag, erratic flag, priority
 void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint32_t tunn, uint32_t err, int prio){
-  int spawnRoom = rand() % d->num_rooms;
   int speed = (rand() % 15) + 5;
-  mon->position[dim_y] = d->rooms[spawnRoom].position[dim_y];
-  mon->position[dim_x] = d->rooms[spawnRoom].position[dim_x];
   mon->nextTurn = 0;
   mon->speed = speed;
   mon->prio = prio;
 
   if(intel && tele && tunn && err){
-    mon->c = '0';
+    mon->c = 'f';
   }else if(intel && tele && tunn && !err){
-    mon->c = '1';
+    mon->c = '7';
   }else if(intel && tele && !tunn && err){
-    mon->c = '2';
+    mon->c = 'b';
   }else if(intel && tele && !tunn && !err){
     mon->c = '3';
   }else if(intel && !tele && tunn && err){
-    mon->c = '4';
+    mon->c = 'd';
   }else if(intel && !tele && tunn && !err){
     mon->c = '5';
   }else if(intel && !tele && !tunn && err){
-    mon->c = '6';
-  }else if(intel && !tele && !tunn && !err){
-    mon->c = '7';
-  }else if(!intel && tele && tunn && err){
-    mon->c = '8';
-  }else if(!intel && tele && tunn && !err){
     mon->c = '9';
+  }else if(intel && !tele && !tunn && !err){
+    mon->c = '1';
+  }else if(!intel && tele && tunn && err){
+    mon->c = 'e';
+  }else if(!intel && tele && tunn && !err){
+    mon->c = '6';
   }else if(!intel && tele && !tunn && err){
     mon->c = 'a';
   }else if(!intel && tele && !tunn && !err){
-    mon->c = 'b';
+    mon->c = '2';
   }else if(!intel && !tele && tunn && err){
     mon->c = 'c';
   }else if(!intel && !tele && tunn && !err){
-    mon->c = 'd';
+    mon->c = '4';
   }else if(!intel && !tele && !tunn && err){
-    mon->c = 'e';
+    mon->c = '8';
   }else if(!intel && !tele && !tunn && !err){
-    mon->c = 'f';
+    mon->c = '0';
   }
+  
+  if(tele && tunn){
+    do{
+       int spawnY = rand() % (DUNGEON_Y - 1);
+       int spawnX = rand() % (DUNGEON_X - 1);
+       mon->position[dim_y] = spawnY;
+       mon->position[dim_x] = spawnX;
+    }while(overlaps_with_any(d, mon));
+   
+  }else{
+    do{
+       int spawnRoom = rand() % d->num_rooms;
+       room_t temp = d->rooms[spawnRoom];
+       int roomY = temp.position[dim_y] + rand() % temp.size[dim_y];
+       int roomX = temp.position[dim_x] + rand() % temp.size[dim_x];
+       mon->position[dim_y] = roomY;
+       mon->position[dim_x] = roomX;
+    }while(in_room(d, mon) && overlaps_with_any(d, mon));
+  }
+  
+  mon->memory[dim_y] = mon->position[dim_y];
+  mon->memory[dim_x] = mon->position[dim_x];
 }
 
 void generate_mons(dungeon_t *d, int numMons){
@@ -543,6 +595,8 @@ int main(int argc, char *argv[])
   do_seed = 1;
   save_file = load_file = NULL;
 
+  uint32_t mons = DEFAULT_MONS;
+
   /* The project spec requires '--load' and '--save'.  It's common  *
    * to have short and long forms of most switches (assuming you    *
    * don't run out of letters).  For now, we've got plenty.  Long   *
@@ -620,6 +674,15 @@ int main(int argc, char *argv[])
             pgm_file = argv[++i];
           }
           break;
+	  case 'n':
+	     if ((!long_arg && argv[i][2]) ||
+              (long_arg && strcmp(argv[i], "-nummon"))) {
+	       usage(argv[0]);
+	     }
+	     if ((argc > i + 1) && argv[i + 1][0] != '-') {
+	       mons = atoi(argv[++i]);
+	     }
+          break;
         default:
           usage(argv[0]);
         }
@@ -665,7 +728,7 @@ int main(int argc, char *argv[])
   dijkstra(&d);
   dijkstra_tunnel(&d);
   //TODO: parse args for --nummon and add here instead of 10
-  generate_mons(&d, 10);
+  generate_mons(&d, mons);
   monster_loop(&d);
   
   //render_dungeon(&d);

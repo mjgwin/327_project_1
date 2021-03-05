@@ -130,7 +130,7 @@ void generate_mon(dungeon_t *d, mon_t *mon, uint32_t intel, uint32_t tele, uint3
        int roomX = temp.position[dim_x] + rand() % temp.size[dim_x];
        mon->position[dim_y] = roomY;
        mon->position[dim_x] = roomX;
-    }while(in_room(d, mon) && overlaps_with_any(d, mon));
+    }while(in_room(d, mon) || overlaps_with_any(d, mon));
   }
   
   mon->memory[dim_y] = mon->position[dim_y];

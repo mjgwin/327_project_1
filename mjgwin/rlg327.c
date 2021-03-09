@@ -74,6 +74,11 @@ void usage(char *name)
   exit(-1);
 }
 
+void cleanDungeon(dungeon_t *d){
+  character_delete(d->character);
+  pc_delete(d->pc.pc);
+}
+
 int main(int argc, char *argv[])
 {
   dungeon_t d;
@@ -233,8 +238,8 @@ int main(int argc, char *argv[])
     render_dungeon(&d);
     do_moves(&d);
     if(getStateChange()){
+      cleanDungeon(&d);
       gen_dungeon(&d);
-      config_pc(&d);
       gen_monsters(&d);
       setStateChange(0);
     }

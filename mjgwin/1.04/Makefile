@@ -5,13 +5,13 @@ RM = rm -f
 
 TERM = "\"S2021\""
 
-CFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
+CFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM) -pg
 CXXFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
 
-LDFLAGS = 
+LDFLAGS = -pg
 
 BIN = rlg327
-OBJS = rlg327.o heap.o
+OBJS = rlg327.o heap.o dungeon.o path.o utils.o
 
 all: $(BIN) etags
 

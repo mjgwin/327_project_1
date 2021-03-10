@@ -74,6 +74,14 @@ void usage(char *name)
   exit(-1);
 }
 
+void cleanDungeon(dungeon_t *d){
+  delete_dungeon(d);
+  init_dungeon(d);
+  gen_dungeon(d);
+  config_pc(d);
+  gen_monsters(d);
+}
+
 int main(int argc, char *argv[])
 {
   dungeon_t d;
@@ -232,6 +240,10 @@ int main(int argc, char *argv[])
   while (pc_is_alive(&d) && dungeon_has_npcs(&d)) {
     render_dungeon(&d);
     do_moves(&d);
+    if(getStateChange()){
+      cleanDungeon(&d);
+      setStateChange(0);
+    }
     if (delay) {
       usleep(500000);
     }

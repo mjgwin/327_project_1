@@ -6,7 +6,7 @@
 void init_terminal();
 void show_screen();
 void render_board(dungeon_t *d);
-int take_turn(dungeon_t *d,  pair_t next);
+void take_turn(dungeon_t *d,  pair_t next);
 int validUpStair(dungeon_t *d);
 int validDownStair(dungeon_t *d);
 int getStateChange();

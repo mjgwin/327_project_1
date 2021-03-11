@@ -244,13 +244,20 @@ int main(int argc, char *argv[])
       cleanDungeon(&d);
       setStateChange(0);
     }
+    if(getQuit()){
+      break;
+    }
     if (delay) {
       usleep(500000);
     }
   }
-  endwin();
+  if(!getQuit()){
+     endwin();
+     render_dungeon(&d);
+  }
+ 
 
-  render_dungeon(&d);
+  
 
   if (do_save) {
     if (do_save_seed) {
@@ -275,12 +282,14 @@ int main(int argc, char *argv[])
       free(save_file);
     }
   }
-
-  printf("%s", pc_is_alive(&d) ? victory : tombstone);
-  printf("You defended your life in the face of %u deadly beasts.\n"
+  if(!getQuit()){
+     printf("%s", pc_is_alive(&d) ? victory : tombstone);
+     printf("You defended your life in the face of %u deadly beasts.\n"
          "You avenged the cruel and untimely murders of %u "
          "peaceful dungeon residents.\n",
          d.pc.kills[kill_direct], d.pc.kills[kill_avenged]);
+  }
+ 
 
   pc_delete(d.pc.pc);
 

@@ -4,6 +4,7 @@
 
 char board[DUNGEON_Y][DUNGEON_X];
 int stateChange = 0;
+int quit = 0;
 
 void init_terminal() {
   initscr();
@@ -26,12 +27,13 @@ void show_screen(dungeon_t *d){
   refresh();
 }
 
-void take_turn(dungeon_t *d, pair_t next) {
+int take_turn(dungeon_t *d, pair_t next) {
   char key;
   int lowerBound = 0;
   int upperBound = 24;
   int check = 1;
   int k;
+  int performedMove = 1;
   show_screen(d);
   
   key = getch();
@@ -69,6 +71,7 @@ void take_turn(dungeon_t *d, pair_t next) {
 	stateChange = 1;
       }else{
 	 mvprintw(23, 1, "Not a valid up stair");
+	 performedMove = 0;
       }
       break;
     case '>': //DOWN STAIRS
@@ -76,6 +79,7 @@ void take_turn(dungeon_t *d, pair_t next) {
 	stateChange = 1;
       }else{
 	 mvprintw(23, 1, "Not a valid down stair");
+	 performedMove = 0;
       }
       break;
     case ' ': //STAY IN PLACE
@@ -117,12 +121,16 @@ void take_turn(dungeon_t *d, pair_t next) {
         }
       }
       break;
+    case 'Q':
+      quit = 1;
     default:
+      performedMove = 0;
       mvprintw(23, 1, "Unkown key: %d", key);
       refresh();
-      return;
+      return performedMove;
   }
   show_screen(d);
+  return performedMove;
 }
 
 int validUpStair(dungeon_t *d){
@@ -176,6 +184,10 @@ int getStateChange(){
 
 void setStateChange(int state){
    stateChange = state;
+}
+
+int getQuit(){
+  return quit;
 }
 
 void monster_display(int to, int from, dungeon_t *d) {

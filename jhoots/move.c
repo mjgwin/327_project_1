@@ -49,6 +49,8 @@ void do_moves(dungeon_t *d)
   character_t *c;
   event_t *e;
 
+ 
+
   /* Remove the PC when it is PC turn.  Replace on next call.  This allows *
    * use to completely uninit the heap when generating a new level without *
    * worrying about deleting the PC.                                       */
@@ -71,6 +73,8 @@ void do_moves(dungeon_t *d)
     e->c = &d->pc;
     heap_insert(&d->events, e);
   }
+
+ 
 
   while (pc_is_alive(d) &&
          (e = heap_remove_min(&d->events)) &&
@@ -106,7 +110,11 @@ void do_moves(dungeon_t *d)
     
     next[dim_x] = c->position[dim_x];
     next[dim_y] = c->position[dim_y];
-    take_turn(d, next);
+
+    if(!take_turn(d, next)){
+      return;
+    }
+    
     if (mappair(next) <= ter_floor) {
       return;
     }

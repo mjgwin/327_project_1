@@ -48,6 +48,7 @@ void do_moves(dungeon_t *d)
   pair_t next;
   character_t *c;
   event_t *e;
+  //int check = 0
 
  
 
@@ -111,9 +112,7 @@ void do_moves(dungeon_t *d)
     next[dim_x] = c->position[dim_x];
     next[dim_y] = c->position[dim_y];
 
-    if(!take_turn(d, next)){
-      return;
-    }
+    take_turn(d, next);
     
     if (mappair(next) <= ter_floor) {
       return;

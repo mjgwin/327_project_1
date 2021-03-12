@@ -244,20 +244,12 @@ int main(int argc, char *argv[])
       cleanDungeon(&d);
       setStateChange(0);
     }
-    if(getQuit()){
-      break;
-    }
     if (delay) {
-      usleep(500000);
+      usleep(125000);
     }
   }
-  if(!getQuit()){
-     endwin();
-     render_dungeon(&d);
-  }
- 
 
-  
+  endwin();
 
   if (do_save) {
     if (do_save_seed) {

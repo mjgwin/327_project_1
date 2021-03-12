@@ -27,68 +27,80 @@ void show_screen(dungeon_t *d){
   refresh();
 }
 
-int take_turn(dungeon_t *d, pair_t next) {
+void take_turn(dungeon_t *d, pair_t next) {
   char key;
   int lowerBound = 0;
   int upperBound = 24;
   int check = 1;
+  int check2 = 1;
   int k;
-  int performedMove = 1;
+  //int performedMove = 1;
+while(check2) {  
   show_screen(d);
   
   key = getch();
   switch(key) {
     case 'k': //UP
+      check2 = 0;
       next[dim_y] = next[dim_y] - 1;
       break;
     case 'j': //DOWN
+      check2 = 0;
       next[dim_y] = next[dim_y] + 1;
       break;
     case 'l': //RIGHT
+      check2 = 0;
       next[dim_x] = next[dim_x] + 1;
       break;
     case 'h': //LEFT
+      check2 = 0;
       next[dim_x] = next[dim_x] - 1;
       break;
     case 'u': //UPPER RIGHT
+      check2 = 0;
       next[dim_x] = next[dim_x] + 1;
       next[dim_y] = next[dim_y] - 1;
       break;
     case 'n': //LOWER RIGHT
+      check2 = 0;
       next[dim_x] = next[dim_x] + 1;
       next[dim_y] = next[dim_y] + 1;
       break;
     case 'b': //LOWER LEFT
+      check2 = 0;
       next[dim_x] = next[dim_x] - 1;
       next[dim_y] = next[dim_y] + 1;
       break;
     case 'y': //UPPER LEFT
+      check2 = 0;
       next[dim_x] = next[dim_x] - 1;
       next[dim_y] = next[dim_y] - 1;
       break;
     case '<': //UP STAIRS
+      check2 = 0;
       if(validUpStair(d)){
 	stateChange = 1;
       }else{
 	 mvprintw(23, 1, "Not a valid up stair");
-	 performedMove = 0;
       }
       break;
     case '>': //DOWN STAIRS
+      check2 = 0;
       if(validDownStair(d)){
 	stateChange = 1;
       }else{
 	 mvprintw(23, 1, "Not a valid down stair");
-	 performedMove = 0;
       }
       break;
     case ' ': //STAY IN PLACE
+      check2 = 0;
       break;
     case 'm':
       erase();
       if(upperBound > d->num_monsters) {
         upperBound = d->num_monsters;
       }
+      check = 1;
       while(check) {
         monster_display(lowerBound, upperBound, d);
         k = getch();
@@ -122,15 +134,18 @@ int take_turn(dungeon_t *d, pair_t next) {
       }
       break;
     case 'Q':
+      d->pc.alive = 0;
       quit = 1;
+      check2 = 0;
+      break;
     default:
-      performedMove = 0;
       mvprintw(23, 1, "Unkown key: %d", key);
       refresh();
-      return performedMove;
+      break;
   }
+}
   show_screen(d);
-  return performedMove;
+  return;
 }
 
 int validUpStair(dungeon_t *d){
@@ -205,7 +220,7 @@ void monster_display(int to, int from, dungeon_t *d) {
       mvprintw(i++, 1, "Monster #%d: %c, %d East and %d South", y + 1, c, abs(uX), abs(uY));
     }
     else if(uX < 0 && uY > 0) {
-      mvprintw(i++, 1, "Monster #%d: %c, %d East and %d North %d", y + 1, c, abs(uX), abs(uY), d->num_monsters);
+      mvprintw(i++, 1, "Monster #%d: %c, %d East and %d North", y + 1, c, abs(uX), abs(uY));
     }
     else if(uX > 0 && uY > 0) {
       mvprintw(i++, 1, "Monster #%d: %c, %d West and %d North", y + 1, c, abs(uX), abs(uY));
@@ -222,8 +237,11 @@ void monster_display(int to, int from, dungeon_t *d) {
     else if(uY == 0 && uX > 0) {
       mvprintw(i++, 1, "Monster #%d: %c, %d West", y + 1, c, abs(uX));
     }
-    else if(uY == 0 && uX > 0) {
+    else if(uY == 0 && uX < 0) {
       mvprintw(i++, 1, "Monster #%d: %c, %d East", y + 1, c, abs(uX));
+    }
+    else {
+      mvprintw(i++, 1, "Monster #%d: %c, x: %d, y: %d", y + 1, c, uX, uY);
     }
   }
   refresh();

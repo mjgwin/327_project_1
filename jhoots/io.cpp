@@ -23,6 +23,9 @@ typedef struct io_message {
 static io_message_t *io_head, *io_tail;
 
 uint32_t enableFog = 1;
+uint32_t enableTeleport = 0;
+uint32_t tele_x = 100;
+uint32_t tele_y = 100;
 
 void io_init_terminal(void)
 {
@@ -233,8 +236,10 @@ void io_display(dungeon_t *d, uint32_t fogActive)
     for (x = 0; x < 80; x++) {
       if(d->character[y][x] && fogActive){
 	//display fog of war monsters
-	if(y > pc_y - 3 && y < pc_y + 3 && x > pc_x - 3 && x < pc_x + 3){
-	  mvaddch(y + 1, x, d->character[y][x]->symbol);
+	if(enableTeleport && x == tele_x && y == tele_y){
+	     mvaddch(y + 1, x, '*');     
+	}else if(y > pc_y - 3 && y < pc_y + 3 && x > pc_x - 3 && x < pc_x + 3){
+	     mvaddch(y + 1, x, d->character[y][x]->symbol);
 	}
       }
       else if (d->character[y][x]) {
@@ -491,42 +496,86 @@ void io_handle_input(dungeon_t *d)
     case '7':
     case 'y':
     case KEY_HOME:
-      fail_code = move_pc(d, 7);
+      if(enableTeleport){
+	tele_x--;
+	tele_y--;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 7);
+      }
       break;
     case '8':
     case 'k':
     case KEY_UP:
-      fail_code = move_pc(d, 8);
+       if(enableTeleport){
+	tele_y--;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 8);
+      }
       break;
     case '9':
     case 'u':
     case KEY_PPAGE:
-      fail_code = move_pc(d, 9);
+       if(enableTeleport){
+	 tele_x++;
+	 tele_y--;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 9);
+      }
       break;
     case '6':
     case 'l':
     case KEY_RIGHT:
-      fail_code = move_pc(d, 6);
+       if(enableTeleport){
+	tele_x++;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 6);
+      }
       break;
     case '3':
     case 'n':
     case KEY_NPAGE:
-      fail_code = move_pc(d, 3);
+       if(enableTeleport){
+	tele_x++;
+	tele_y++;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 3);
+      }
       break;
     case '2':
     case 'j':
     case KEY_DOWN:
-      fail_code = move_pc(d, 2);
+       if(enableTeleport){
+	tele_y++;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 2);
+      }
       break;
     case '1':
     case 'b':
     case KEY_END:
-      fail_code = move_pc(d, 1);
+       if(enableTeleport){
+	tele_x--;
+	tele_y++;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 1);
+      }
       break;
     case '4':
     case 'h':
     case KEY_LEFT:
-      fail_code = move_pc(d, 4);
+       if(enableTeleport){
+	tele_x--;
+	fail_code = 1;
+      }else{
+	fail_code = move_pc(d, 4);
+      }
       break;
     case '5':
     case ' ':
@@ -569,9 +618,19 @@ void io_handle_input(dungeon_t *d)
       fail_code = 1;
       break;
     case 'g':
-      /* Teleport the PC to a random place in the dungeon.              */
-      io_teleport_pc(d);
-      fail_code = 0;
+      // io_teleport_pc(d);
+      if(!enableTeleport){
+	enableTeleport = 1;
+	tele_x = d->pc.position[dim_x];
+	tele_y = d->pc.position[dim_y];
+      }else{
+	enableTeleport = 0;
+	d->pc.position[dim_x] = tele_x;
+	d->pc.position[dim_y] = tele_y;
+	tele_x = 100;
+	tele_y = 100;
+      }
+      fail_code = 1;
       break;
     case 'm':
       io_list_monsters(d);

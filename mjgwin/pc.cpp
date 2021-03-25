@@ -40,7 +40,7 @@ void config_pc(dungeon_t *d)
   d->pc.speed = PC_SPEED;
   d->pc.alive = 1;
   d->pc.sequence_number = 0;
-  d->pc.pc = calloc(1, sizeof (*d->pc.pc));
+  d->pc.pc = (pc_t*) calloc(1, sizeof (*d->pc.pc));
   d->pc.npc = NULL;
   d->pc.kills[kill_direct] = d->pc.kills[kill_avenged] = 0;
 
@@ -54,15 +54,7 @@ uint32_t pc_next_pos(dungeon_t *d, pair_t dir)
 {
   static uint32_t have_seen_corner = 0;
   static uint32_t count = 0;
-  static int target_room = -1;
-  static int target_is_valid = 0;
 
-  if (target_is_valid &&
-      (d->pc.position[dim_x] == d->rooms[target_room].position[dim_x]) &&
-      (d->pc.position[dim_y] == d->rooms[target_room].position[dim_y])) {
-    target_is_valid = 0;
-  }
-  
   dir[dim_y] = dir[dim_x] = 0;
 
   if (in_corner(d, &d->pc)) {
@@ -104,28 +96,14 @@ uint32_t pc_next_pos(dungeon_t *d, pair_t dir)
     } else {
       dir_nearest_wall(d, &d->pc, dir);
     }
-  } else {
-    /* And after we've been there, let's cycle through the rooms, *
-     * one-by-one, until the game ends                            */
-    if (target_room == -1) {
-      target_room = 0;
-      target_is_valid = 1;
-    }
-    if (!target_is_valid) {
-      target_is_valid = 1;
-      target_room = (target_room + 1) % d->num_rooms;
-    }
-    /* When against the dungeon border, always head toward the target; *
-     * otherwise, head toward the target with 1/3 probability.         */
-    if (against_wall(d, &d->pc) || rand_under(1, 3)) {
-      dir[dim_x] = ((d->pc.position[dim_x] >
-		     d->rooms[target_room].position[dim_x]) ? -1 : 1);
-      dir[dim_y] = ((d->pc.position[dim_y] >
-		     d->rooms[target_room].position[dim_y]) ? -1 : 1);
-    } else {
-      /* Else we'll choose a random direction */
+  }else {
+    /* And after we've been there, let's head toward the center of the map. */
+    if (!against_wall(d, &d->pc) && ((rand() & 0x111) == 0x111)) {
       dir[dim_x] = (rand() % 3) - 1;
       dir[dim_y] = (rand() % 3) - 1;
+    } else {
+      dir[dim_x] = ((d->pc.position[dim_x] > DUNGEON_X / 2) ? -1 : 1);
+      dir[dim_y] = ((d->pc.position[dim_y] > DUNGEON_Y / 2) ? -1 : 1);
     }
   }
 

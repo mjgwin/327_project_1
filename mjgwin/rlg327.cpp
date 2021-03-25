@@ -9,7 +9,7 @@
 #include "npc.h"
 #include "move.h"
 #include "utils.h"
-#include "curses.h"
+#include "io.h"
 
 const char *victory =
   "\n                                       o\n"
@@ -68,18 +68,10 @@ void usage(char *name)
   fprintf(stderr,
           "Usage: %s [-r|--rand <seed>] [-l|--load [<file>]]\n"
           "          [-s|--save [<file>]] [-i|--image <pgm file>]\n"
-          "          [-n|--nummon <count>] [-d|--delay <microseconds>]\n",
+          "          [-n|--nummon <count>]\n",
           name);
 
   exit(-1);
-}
-
-void cleanDungeon(dungeon_t *d){
-  delete_dungeon(d);
-  init_dungeon(d);
-  gen_dungeon(d);
-  config_pc(d);
-  gen_monsters(d);
 }
 
 int main(int argc, char *argv[])
@@ -93,7 +85,6 @@ int main(int argc, char *argv[])
   char *save_file;
   char *load_file;
   char *pgm_file;
-  uint32_t delay = 33000;
   
   /* Quiet a false positive from valgrind. */
   memset(&d, 0, sizeof (d));
@@ -120,25 +111,17 @@ int main(int argc, char *argv[])
    * interesting test dungeons for you.                             */
  
  if (argc > 1) {
-    for (i = 1, long_arg = 0; i < argc; i++, long_arg = 0) {
+   for (i = 1, long_arg = 0; (int) i < argc; i++, long_arg = 0) {
       if (argv[i][0] == '-') { /* All switches start with a dash */
         if (argv[i][1] == '-') {
           argv[i]++;    /* Make the argument have a single dash so we can */
           long_arg = 1; /* handle long and short args at the same place.  */
         }
         switch (argv[i][1]) {
-        case 'd':
-          if ((!long_arg && argv[i][2]) ||
-              (long_arg && strcmp(argv[i], "-delay")) ||
-              argc < ++i + 1 /* No more arguments */ ||
-              !sscanf(argv[i], "%u", &delay)) {
-            usage(argv[0]);
-          }
-          break;
         case 'n':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-nummon")) ||
-              argc < ++i + 1 /* No more arguments */ ||
+              argc < (int)++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%hu", &d.max_monsters)) {
             usage(argv[0]);
           }
@@ -146,7 +129,7 @@ int main(int argc, char *argv[])
         case 'r':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-rand")) ||
-              argc < ++i + 1 /* No more arguments */ ||
+              argc < (int) ++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%lu", &seed) /* Argument is not an integer */) {
             usage(argv[0]);
           }
@@ -158,7 +141,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_load = 1;
-          if ((argc > i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             load_file = argv[++i];
@@ -170,7 +153,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_save = 1;
-          if ((argc > i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll save to it.  If it is "seed", we'll save to    *
 	     * <the current seed>.rlg327.  If it is "image", we'll  *
@@ -192,7 +175,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_image = 1;
-          if ((argc > i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             pgm_file = argv[++i];
@@ -214,13 +197,9 @@ int main(int argc, char *argv[])
     seed = (tv.tv_usec ^ (tv.tv_sec << 20)) & 0xffffffff;
   }
 
-  if (!do_load && !do_image) {
-    printf("Seed is %ld.\n", seed);
-  } else {
-    printf("Seed is %ld.  Dungeon loaded from file.\n", seed);
-  }
   srand(seed);
 
+  io_init_terminal();
   init_dungeon(&d);
 
   if (do_load) {
@@ -230,32 +209,31 @@ int main(int argc, char *argv[])
   } else {
     gen_dungeon(&d);
   }
-
+  
   /* Ignoring PC position in saved dungeons.  Not a bug. */
   config_pc(&d);
+   //creates fog map for renderer to use
+  io_generate_fog_map(&d);
   gen_monsters(&d);
   
-  init_terminal();
-
-  while (pc_is_alive(&d) && dungeon_has_npcs(&d)) {
-    render_dungeon(&d);
-    do_moves(&d);
-    if(getStateChange()){
-      cleanDungeon(&d);
-      setStateChange(0);
-    }
-    if (delay) {
-      usleep(500000);
-    }
+  io_display(&d, io_get_fog_status());
+  if (!do_load && !do_image) {
+    io_queue_message("Seed is %u.", seed);
   }
-  endwin();
+ 
+ 
+  
+  while (pc_is_alive(&d) && dungeon_has_npcs(&d) && !d.quit) {
+    do_moves(&d);
+  }
+  io_display(&d, io_get_fog_status());
 
-  render_dungeon(&d);
+  io_reset_terminal();
 
   if (do_save) {
     if (do_save_seed) {
        /* 10 bytes for number, plus dot, extention and null terminator. */
-      save_file = malloc(18);
+      save_file =(char*) malloc(18);
       sprintf(save_file, "%ld.rlg327", seed);
     }
     if (do_save_image) {
@@ -264,7 +242,7 @@ int main(int argc, char *argv[])
 	do_save_image = 0;
       } else {
 	/* Extension of 3 characters longer than image extension + null. */
-	save_file = malloc(strlen(pgm_file) + 4);
+	save_file = (char*)malloc(strlen(pgm_file) + 4);
 	strcpy(save_file, pgm_file);
 	strcpy(strchr(save_file, '.') + 1, "rlg327");
       }

@@ -209,19 +209,24 @@ int main(int argc, char *argv[])
   } else {
     gen_dungeon(&d);
   }
-
+  
   /* Ignoring PC position in saved dungeons.  Not a bug. */
   config_pc(&d);
+   //creates fog map for renderer to use
+  io_generate_fog_map(&d);
   gen_monsters(&d);
-
-  io_display(&d);
+  
+  io_display(&d, io_get_fog_status());
   if (!do_load && !do_image) {
     io_queue_message("Seed is %u.", seed);
   }
+ 
+ 
+  
   while (pc_is_alive(&d) && dungeon_has_npcs(&d) && !d.quit) {
     do_moves(&d);
   }
-  io_display(&d);
+  io_display(&d, io_get_fog_status());
 
   io_reset_terminal();
 

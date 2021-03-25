@@ -22,6 +22,8 @@ typedef struct io_message {
 
 static io_message_t *io_head, *io_tail;
 
+uint32_t enableFog = 1;
+
 void io_init_terminal(void)
 {
   initscr();
@@ -197,18 +199,56 @@ static character_t *io_nearest_visible_monster(dungeon_t *d)
   return n;
 }
 
-void io_display(dungeon_t *d)
+void io_generate_fog_map(dungeon_t *d){
+  uint32_t y, x;
+  
+  for (y = 0; y < 21; y++) {
+    for (x = 0; x < 80; x++) {
+      d->fog_map[y][x] = ter_wall_immutable;
+    }
+  }
+}
+
+void io_update_fog_map(dungeon_t *d){
+
+  uint32_t pc_x = d->pc.position[dim_x];
+  uint32_t pc_y = d->pc.position[dim_y];
+  uint32_t y, x;
+  for (y = pc_y - 2; y < pc_y + 3; y++) {
+    for (x = pc_x - 2; x < pc_x + 3; x++) {
+      d->fog_map[y][x] = mapxy(x,y);
+    }
+  }
+}
+
+void io_display(dungeon_t *d, uint32_t fogActive)
 {
   uint32_t y, x;
+  uint32_t pc_x = d->pc.position[dim_x];
+  uint32_t pc_y = d->pc.position[dim_y];
   character_t *c;
 
   clear();
   for (y = 0; y < 21; y++) {
     for (x = 0; x < 80; x++) {
-      if (d->character[y][x]) {
+      if(d->character[y][x] && fogActive){
+	//display fog of war monsters
+	if(y > pc_y - 3 && y < pc_y + 3 && x > pc_x - 3 && x < pc_x + 3){
+	  mvaddch(y + 1, x, d->character[y][x]->symbol);
+	}
+      }
+      else if (d->character[y][x]) {
         mvaddch(y + 1, x, d->character[y][x]->symbol);
       } else {
-        switch (mapxy(x, y)) {
+	terrain_type_t displayTerrain;
+
+	if(fogActive){
+	  displayTerrain = d->fog_map[y][x];
+	}else{
+	  displayTerrain = mapxy(x,y);
+	}
+	
+        switch (displayTerrain) {
         case ter_wall:
         case ter_wall_immutable:
           mvaddch(y + 1, x, ' ');
@@ -437,7 +477,7 @@ static void io_list_monsters(dungeon_t *d)
   free(c);
 
   /* And redraw the dungeon */
-  io_display(d);
+  io_display(d, io_get_fog_status());
 }
 
 void io_handle_input(dungeon_t *d)
@@ -446,6 +486,7 @@ void io_handle_input(dungeon_t *d)
   int key;
 
   do {
+    io_display(d, io_get_fog_status());
     switch (key = getch()) {
     case '7':
     case 'y':
@@ -521,7 +562,7 @@ void io_handle_input(dungeon_t *d)
     case 's':
       /* New command.  Return to normal display after displaying some   *
        * special screen.                                                */
-      io_display(d);
+      io_display(d, 1);
       fail_code = 1;
       break;
     case 'L':
@@ -535,6 +576,19 @@ void io_handle_input(dungeon_t *d)
     case 'm':
       io_list_monsters(d);
       fail_code = 1;
+      break;
+    case 'f':
+      if(io_get_fog_status()){
+	io_set_fog_status(0);
+	io_display(d, io_get_fog_status());
+	io_queue_message("Fog disabled");
+	fail_code = 1;
+      }else{
+	io_set_fog_status(1);
+	io_display(d, io_get_fog_status());
+	io_queue_message("Fog enabled");
+	fail_code = 1;
+      }
       break;
     case 'q':
       /* Demonstrate use of the message queue.  You can use this for *
@@ -571,4 +625,12 @@ void io_handle_input(dungeon_t *d)
       fail_code = 1;
     }
   } while (fail_code);
+}
+
+void io_set_fog_status(uint32_t status){
+  enableFog = status;
+}
+
+uint32_t io_get_fog_status(){
+  return enableFog;
 }

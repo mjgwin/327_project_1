@@ -166,8 +166,9 @@ void do_moves(dungeon_t *d)
 
     heap_insert(&d->events, update_event(d, e, 1000 / c->speed));
   }
-
-  io_display(d);
+  io_update_fog_map(d);
+  //number is fogActive
+  // io_display(d, io_get_fog_status());
   if (pc_is_alive(d) && e->c == &d->pc) {
     c = e->c;
     d->time = e->time;
@@ -314,7 +315,7 @@ uint32_t move_pc(dungeon_t *d, uint32_t dir)
   } else if (mappair(next) < ter_floor) {
     io_queue_message(wallmsg[rand() % (sizeof (wallmsg) /
                                        sizeof (wallmsg[0]))]);
-    io_display(d);
+    io_display(d, io_get_fog_status());
   }
 
   return 1;

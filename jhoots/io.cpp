@@ -11,6 +11,8 @@
 #include "dungeon.h"
 
 /* Same ugly hack we did in path.c */
+
+
 static dungeon_t *dungeon;
 
 typedef struct io_message {
@@ -23,8 +25,6 @@ typedef struct io_message {
 static io_message_t *io_head, *io_tail;
 
 uint32_t enableFog = 1;
-
-
 
 void io_init_terminal(void)
 {
@@ -571,7 +571,7 @@ void io_handle_input(dungeon_t *d)
       fail_code = 1;
       break;
     case 'g':
-   
+      io_teleport(d);
       break;
     case 'm':
       io_list_monsters(d);
@@ -625,6 +625,85 @@ void io_handle_input(dungeon_t *d)
       fail_code = 1;
     }
   } while (fail_code);
+}
+
+void io_teleport(dungeon_t *d){
+
+  uint32_t tele_y = d->pc.position[dim_y];
+  uint32_t tele_x = d->pc.position[dim_x];
+  
+  uint32_t fail_code;
+  int key;
+  do {
+    switch (key = getch()) {
+    case '7':
+    case 'y':
+    case KEY_HOME:
+      tele_y--;
+      tele_x--;
+      fail_code = 1;
+      break;
+    case '8':
+    case 'k':
+    case KEY_UP:
+      tele_y--;
+      fail_code = 1;
+      break;
+    case '9':
+    case 'u':
+    case KEY_PPAGE:
+      tele_y--;
+      tele_x++;
+      fail_code = 1;
+      break;
+    case '6':
+    case 'l':
+    case KEY_RIGHT:
+      tele_x++;
+      fail_code = 1;
+      break;
+    case '3':
+    case 'n':
+    case KEY_NPAGE:
+      tele_y++;
+      tele_x++;
+      fail_code = 1;
+      break;
+    case '2':
+    case 'j':
+    case KEY_DOWN:
+      tele_y++;
+      fail_code = 1;
+      break;
+    case '1':
+    case 'b':
+    case KEY_END:
+      tele_y++;
+      tele_x--;
+      fail_code = 1;
+      break;
+    case '4':
+    case 'h':
+    case KEY_LEFT:
+      tele_x--;
+      fail_code = 1;
+      break;
+    case 'g':
+      fail_code = 0;
+      break;
+    }
+    clear();
+    io_display(d, io_get_fog_status());
+    mvaddch(tele_y + 1, tele_x, '*');
+  }while(fail_code);
+  
+  d->character[d->pc.position[dim_y]][d->pc.position[dim_x]] = NULL;
+  d->character[tele_y][tele_x] = &d->pc;
+
+  d->pc.position[dim_y] = tele_y;
+  d->pc.position[dim_x] = tele_x;
+
+  io_display(d, io_get_fog_status());
 }
 
 void io_set_fog_status(uint32_t status){

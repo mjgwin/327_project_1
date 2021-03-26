@@ -12,4 +12,5 @@ void io_handle_input(dungeon_t *d);
 void io_queue_message(const char *format, ...);
 void io_set_fog_status(uint32_t status);
 uint32_t io_get_fog_status();
+void io_teleport(dungeon_t *d);
 #endif

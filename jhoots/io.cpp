@@ -628,12 +628,13 @@ void io_handle_input(dungeon_t *d)
 }
 
 void io_teleport(dungeon_t *d){
-
+  io_queue_message("Teleport Active");
   uint32_t tele_y = d->pc.position[dim_y];
   uint32_t tele_x = d->pc.position[dim_x];
   
   uint32_t fail_code;
   int key;
+  uint32_t random = 0;
   do {
     switch (key = getch()) {
     case '7':
@@ -691,17 +692,25 @@ void io_teleport(dungeon_t *d){
     case 'g':
       fail_code = 0;
       break;
+    case 'r':
+    fail_code = io_teleport_pc(d);
+    random = 1;
+    break;
     }
     clear();
     io_display(d, io_get_fog_status());
     mvaddch(tele_y + 1, tele_x, '*');
   }while(fail_code);
-  
-  d->character[d->pc.position[dim_y]][d->pc.position[dim_x]] = NULL;
-  d->character[tele_y][tele_x] = &d->pc;
+  io_queue_message("Teleported");
+  if(!random){
+    
+    d->character[d->pc.position[dim_y]][d->pc.position[dim_x]] = NULL;
+    d->character[tele_y][tele_x] = &d->pc;
 
-  d->pc.position[dim_y] = tele_y;
-  d->pc.position[dim_x] = tele_x;
+    d->pc.position[dim_y] = tele_y;
+    d->pc.position[dim_x] = tele_x;
+  }
+  
 
   io_display(d, io_get_fog_status());
 }

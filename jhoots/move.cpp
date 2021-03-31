@@ -15,7 +15,7 @@
 #include "event.h"
 #include "io.h"
 
-void do_combat(dungeon_t *d, character_t *atk, character_t *def)
+void do_combat(dungeon *d, character *atk, character *def)
 {
   int can_see_atk, can_see_def;
   const char *organs[] = {
@@ -56,7 +56,7 @@ void do_combat(dungeon_t *d, character_t *atk, character_t *def)
     def->alive = 0;
     charpair(def->position) = NULL;
     
-    if (def != &d->pc) {
+    if (def != d->PC) {
       d->num_monsters--;
     } else {
       if ((part = rand() % (sizeof (organs) / sizeof (organs[0]))) < 26) {
@@ -77,14 +77,16 @@ void do_combat(dungeon_t *d, character_t *atk, character_t *def)
                                   def->kills[kill_avenged]);
   }
 
-  if (atk == &d->pc) {
+  if (atk == d->PC) {
     io_queue_message("You smite the %c!", def->symbol);
   }
 
-  can_see_atk = can_see(d, &d->pc, atk);
-  can_see_def = can_see(d, &d->pc, def);
+  can_see_atk = can_see(d, character_get_pos(d->PC),
+                        character_get_pos(atk), 1, 0);
+  can_see_def = can_see(d, character_get_pos(d->PC),
+                        character_get_pos(def), 1, 0);
 
-  if (atk != &d->pc && def != &d->pc) {
+  if (atk != d->PC && def != d->PC) {
     if (can_see_atk && !can_see_def) {
       io_queue_message("The %c callously murders some poor, "
                        "defenseless creature.", atk->symbol);
@@ -99,7 +101,7 @@ void do_combat(dungeon_t *d, character_t *atk, character_t *def)
   }
 }
 
-void move_character(dungeon_t *d, character_t *c, pair_t next)
+void move_character(dungeon *d, character *c, pair_t next)
 {
   if (charpair(next) &&
       ((next[dim_y] != c->position[dim_y]) ||
@@ -108,18 +110,23 @@ void move_character(dungeon_t *d, character_t *c, pair_t next)
   } else {
     /* No character in new position. */
 
-    d->character[c->position[dim_y]][c->position[dim_x]] = NULL;
+    d->character_map[c->position[dim_y]][c->position[dim_x]] = NULL;
     c->position[dim_y] = next[dim_y];
     c->position[dim_x] = next[dim_x];
-    d->character[c->position[dim_y]][c->position[dim_x]] = c;
+    d->character_map[c->position[dim_y]][c->position[dim_x]] = c;
+  }
+
+  if (c == d->PC) {
+    pc_reset_visibility(d->PC);
+    pc_observe_terrain(d->PC, d);
   }
 }
 
-void do_moves(dungeon_t *d)
+void do_moves(dungeon *d)
 {
   pair_t next;
-  character_t *c;
-  event_t *e;
+  character *c;
+  event *e;
 
   /* Remove the PC when it is PC turn.  Replace on next call.  This allows *
    * use to completely uninit the heap when generating a new level without *
@@ -129,7 +136,7 @@ void do_moves(dungeon_t *d)
     /* The PC always goes first one a tie, so we don't use new_event().  *
      * We generate one manually so that we can set the PC sequence       *
      * number to zero.                                                   */
-    e = (event_t*) malloc(sizeof (*e));
+    e = (event *) malloc(sizeof (*e));
     e->type = event_character_turn;
     /* Hack: New dungeons are marked.  Unmark and ensure PC goes at d->time, *
      * otherwise, monsters get a turn before the PC.                         */
@@ -137,39 +144,38 @@ void do_moves(dungeon_t *d)
       d->is_new = 0;
       e->time = d->time;
     } else {
-      e->time = d->time + (1000 / d->pc.speed);
+      e->time = d->time + (1000 / d->PC->speed);
     }
     e->sequence = 0;
-    e->c = &d->pc;
+    e->c = d->PC;
     heap_insert(&d->events, e);
   }
 
   while (pc_is_alive(d) &&
-         (e = (event_t*)heap_remove_min(&d->events)) &&
-         ((e->type != event_character_turn) || (e->c != &d->pc))) {
+         (e = (event *) heap_remove_min(&d->events)) &&
+         ((e->type != event_character_turn) || (e->c != d->PC))) {
     d->time = e->time;
     if (e->type == event_character_turn) {
       c = e->c;
     }
     if (!c->alive) {
-      if (d->character[c->position[dim_y]][c->position[dim_x]] == c) {
-        d->character[c->position[dim_y]][c->position[dim_x]] = NULL;
+      if (d->character_map[c->position[dim_y]][c->position[dim_x]] == c) {
+        d->character_map[c->position[dim_y]][c->position[dim_x]] = NULL;
       }
-      if (c != &d->pc) {
+      if (c != d->PC) {
         event_delete(e);
       }
       continue;
     }
 
-    npc_next_pos(d, c, next);
+    npc_next_pos(d, (npc *) c, next);
     move_character(d, c, next);
 
     heap_insert(&d->events, update_event(d, e, 1000 / c->speed));
   }
-  io_update_fog_map(d);
-  //number is fogActive
-  // io_display(d, io_get_fog_status());
-  if (pc_is_alive(d) && e->c == &d->pc) {
+
+  io_display(d);
+  if (pc_is_alive(d) && e->c == d->PC) {
     c = e->c;
     d->time = e->time;
     /* Kind of kludgey, but because the PC is never in the queue when   *
@@ -181,7 +187,7 @@ void do_moves(dungeon_t *d)
   }
 }
 
-void dir_nearest_wall(dungeon_t *d, character_t *c, pair_t dir)
+void dir_nearest_wall(dungeon *d, character *c, pair_t dir)
 {
   dir[dim_x] = dir[dim_y] = 0;
 
@@ -193,7 +199,7 @@ void dir_nearest_wall(dungeon_t *d, character_t *c, pair_t dir)
   }
 }
 
-uint32_t against_wall(dungeon_t *d, character_t *c)
+uint32_t against_wall(dungeon *d, character *c)
 {
   return ((mapxy(c->position[dim_x] - 1,
                  c->position[dim_y]    ) == ter_wall_immutable) ||
@@ -205,7 +211,7 @@ uint32_t against_wall(dungeon_t *d, character_t *c)
                  c->position[dim_y] + 1) == ter_wall_immutable));
 }
 
-uint32_t in_corner(dungeon_t *d, character_t *c)
+uint32_t in_corner(dungeon *d, character *c)
 {
   uint32_t num_immutable;
 
@@ -223,7 +229,7 @@ uint32_t in_corner(dungeon_t *d, character_t *c)
   return num_immutable > 1;
 }
 
-static void new_dungeon_level(dungeon_t *d, uint32_t dir)
+static void new_dungeon_level(dungeon *d, uint32_t dir)
 {
   /* Eventually up and down will be independantly meaningful. *
    * For now, simply generate a new dungeon.                  */
@@ -239,7 +245,7 @@ static void new_dungeon_level(dungeon_t *d, uint32_t dir)
 }
 
 
-uint32_t move_pc(dungeon_t *d, uint32_t dir)
+uint32_t move_pc(dungeon *d, uint32_t dir)
 {
   pair_t next;
   uint32_t was_stairs = 0;
@@ -253,8 +259,8 @@ uint32_t move_pc(dungeon_t *d, uint32_t dir)
     "Are you drunk?"
   };
 
-  next[dim_y] = d->pc.position[dim_y];
-  next[dim_x] = d->pc.position[dim_x];
+  next[dim_y] = d->PC->position[dim_y];
+  next[dim_x] = d->PC->position[dim_x];
 
 
   switch (dir) {
@@ -289,13 +295,13 @@ uint32_t move_pc(dungeon_t *d, uint32_t dir)
     next[dim_x]++;
     break;
   case '<':
-    if (mappair(d->pc.position) == ter_stairs_up) {
+    if (mappair(d->PC->position) == ter_stairs_up) {
       was_stairs = 1;
       new_dungeon_level(d, '<');
     }
     break;
   case '>':
-    if (mappair(d->pc.position) == ter_stairs_down) {
+    if (mappair(d->PC->position) == ter_stairs_down) {
       was_stairs = 1;
       new_dungeon_level(d, '>');
     }
@@ -307,7 +313,7 @@ uint32_t move_pc(dungeon_t *d, uint32_t dir)
   }
 
   if ((dir != '>') && (dir != '<') && (mappair(next) >= ter_floor)) {
-    move_character(d, &d->pc, next);
+    move_character(d, d->PC, next);
     dijkstra(d);
     dijkstra_tunnel(d);
 
@@ -315,7 +321,7 @@ uint32_t move_pc(dungeon_t *d, uint32_t dir)
   } else if (mappair(next) < ter_floor) {
     io_queue_message(wallmsg[rand() % (sizeof (wallmsg) /
                                        sizeof (wallmsg[0]))]);
-    io_display(d, io_get_fog_status());
+    io_display(d);
   }
 
   return 1;

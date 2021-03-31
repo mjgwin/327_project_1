@@ -76,10 +76,10 @@ void usage(char *name)
 
 int main(int argc, char *argv[])
 {
-  dungeon_t d;
+  dungeon d;
   time_t seed;
   struct timeval tv;
-  uint32_t i;
+  int32_t i;
   uint32_t do_load, do_save, do_seed, do_image, do_save_seed, do_save_image;
   uint32_t long_arg;
   char *save_file;
@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
    * interesting test dungeons for you.                             */
  
  if (argc > 1) {
-   for (i = 1, long_arg = 0; (int) i < argc; i++, long_arg = 0) {
+    for (i = 1, long_arg = 0; i < argc; i++, long_arg = 0) {
       if (argv[i][0] == '-') { /* All switches start with a dash */
         if (argv[i][1] == '-') {
           argv[i]++;    /* Make the argument have a single dash so we can */
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         case 'n':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-nummon")) ||
-              argc < (int)++i + 1 /* No more arguments */ ||
+              argc < ++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%hu", &d.max_monsters)) {
             usage(argv[0]);
           }
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
         case 'r':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-rand")) ||
-              argc < (int) ++i + 1 /* No more arguments */ ||
+              argc < ++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%lu", &seed) /* Argument is not an integer */) {
             usage(argv[0]);
           }
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_load = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             load_file = argv[++i];
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_save = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll save to it.  If it is "seed", we'll save to    *
 	     * <the current seed>.rlg327.  If it is "image", we'll  *
@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_image = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             pgm_file = argv[++i];
@@ -209,31 +209,26 @@ int main(int argc, char *argv[])
   } else {
     gen_dungeon(&d);
   }
-  
+
   /* Ignoring PC position in saved dungeons.  Not a bug. */
   config_pc(&d);
-   //creates fog map for renderer to use
-  io_generate_fog_map(&d);
   gen_monsters(&d);
-  
-  io_display(&d, io_get_fog_status());
+
+  io_display(&d);
   if (!do_load && !do_image) {
     io_queue_message("Seed is %u.", seed);
   }
- 
- 
-  
   while (pc_is_alive(&d) && dungeon_has_npcs(&d) && !d.quit) {
     do_moves(&d);
   }
-  io_display(&d, io_get_fog_status());
+  io_display(&d);
 
   io_reset_terminal();
 
   if (do_save) {
     if (do_save_seed) {
        /* 10 bytes for number, plus dot, extention and null terminator. */
-      save_file =(char*) malloc(18);
+      save_file = (char *) malloc(18);
       sprintf(save_file, "%ld.rlg327", seed);
     }
     if (do_save_image) {
@@ -242,7 +237,7 @@ int main(int argc, char *argv[])
 	do_save_image = 0;
       } else {
 	/* Extension of 3 characters longer than image extension + null. */
-	save_file = (char*)malloc(strlen(pgm_file) + 4);
+	save_file = (char *) malloc(strlen(pgm_file) + 4);
 	strcpy(save_file, pgm_file);
 	strcpy(strchr(save_file, '.') + 1, "rlg327");
       }
@@ -258,9 +253,14 @@ int main(int argc, char *argv[])
   printf("You defended your life in the face of %u deadly beasts.\n"
          "You avenged the cruel and untimely murders of %u "
          "peaceful dungeon residents.\n",
-         d.pc.kills[kill_direct], d.pc.kills[kill_avenged]);
+         d.PC->kills[kill_direct], d.PC->kills[kill_avenged]);
 
-  pc_delete(d.pc.pc);
+  if (pc_is_alive(&d)) {
+    /* If the PC is dead, it's in the move heap and will get automatically *
+     * deleted when the heap destructs.  In that case, we can't call       *
+     * delete_pc(), because it will lead to a double delete.               */
+    character_delete(d.PC);
+  }
 
   delete_dungeon(&d);
 

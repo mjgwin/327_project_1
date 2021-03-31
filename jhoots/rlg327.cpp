@@ -193,6 +193,17 @@ int main(int argc, char *argv[])
     }
   }
 
+  std::ifstream temp("monster_desc.txt");
+  std::string si;
+  int size = 0;
+  while(temp.good()) {
+    getline(temp, si);
+    if(si == "BEGIN MONSTER") {
+      ++size;
+    }
+  }
+  std::cout << size << std::endl;
+
   std::string s, color, desc, name, speed, hp, dam, abil, symb, rrty;
   std::ifstream f("monster_desc.txt");
 

@@ -193,73 +193,68 @@ int main(int argc, char *argv[])
     }
   }
 
-  //std::cout << "bet" << std::endl;
-  std::string s;
-  //int temp;
+  std::string s, color, desc, name, speed, hp, dam, abil, symb, rrty;
   std::ifstream f("monster_desc.txt");
 
- //check file marker
+  //checks file marker
   getline(f, s);
   if(s != "RLG327 MONSTER DESCRIPTION 1") {
     std::cout << "Wrong file" << std::endl;
     return 0;
   }
-  
+
+  //gets us to the first keyword
   while(1) {
-    while(1) {
-      getline(f, s);
-      if(s == "BEGIN MONSTER") {
-	std::cout << "" << std::endl;
-	break;
-      }
-    }
     getline(f, s);
+    if(s == "BEGIN MONSTER") {
+      break;
+    }
+  }
+
+  //outer loop prints
+  while(1) {
     int currMon = 1;
+
+    //keyword parsing
     while(currMon) {
       f >> s; //gets next keyword
       f.get();
       if(s == "NAME"){
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, name);
       }
       else if(s == "DESC") {
         while(1) {
-	  //TODO: might have to find a way to check if the description lines are bigger than 77 bytes;
 	  getline(f, s);
-	  if(s == ".")
+	  if(s == ".") {
+	    desc.pop_back();
 	    break;
-	  std::cout << s << std::endl;
+	  }
+	  desc = desc + s + "\n";
 	}
       }
       else if(s == "COLOR") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, color);
       }
       else if(s == "SPEED") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, speed);
       }
       else if(s == "ABIL") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, abil);
       }
       else if(s == "HP") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, hp);
       }
       else if(s == "DAM") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, dam);
       }
       else if(s == "SYMB") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, symb);
       }
       else if(s == "RRTY") {
-	getline(f, s);
-	std::cout << s << std::endl;
+	getline(f, rrty);
       }
       else if(s == "END") {
+	//set curmon to zero because we are at the end of the mon info
 	currMon = 0;
       }
       else {
@@ -267,9 +262,36 @@ int main(int argc, char *argv[])
 	return -1;
       }
     }
+    //check if file is complete
     getline(f, s);
-    if(!f.good())
+    if(!f.good()) {
+      std::cout << name << std::endl;
+      std::cout << desc << std::endl;
+      std::cout << symb << std::endl;
+      std::cout << color << std::endl;
+      std::cout << speed << std::endl;
+      std::cout << abil << std::endl;
+      std::cout << hp << std::endl;
+      std::cout << dam << std::endl;
+      std::cout << rrty << std::endl;
       break;
+    }
+
+    //if file is not complete bring us to the next keyword and print values
+    getline(f, s);
+    if(s == "BEGIN MONSTER") {
+      std::cout << name << std::endl;
+      std::cout << desc << std::endl;
+      std::cout << symb << std::endl;
+      std::cout << color << std::endl;
+      std::cout << speed << std::endl;
+      std::cout << abil << std::endl;
+      std::cout << hp << std::endl;
+      std::cout << dam << std::endl;
+      std::cout << rrty << std::endl;
+      std::cout << "" << std::endl;
+      desc = "";
+    }
   }
 
   

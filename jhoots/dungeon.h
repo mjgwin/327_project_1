@@ -4,6 +4,7 @@
 # include "heap.h"
 # include "dims.h"
 # include "character.h"
+# include <string>
 
 #define DUNGEON_X              80
 #define DUNGEON_Y              21
@@ -81,6 +82,26 @@ class dungeon {
   uint32_t time;
   uint32_t is_new;
   uint32_t quit;
+};
+
+class dice {
+  public:
+    int base;
+    int dice;
+    int sides;
+};
+
+class monsterDescription {
+  public:
+    std::string name;
+    char desc[6][78];
+    int color;
+    dice speed;
+    int abilities;
+    dice hp;
+    dice attackDam;
+    char symbol;
+    int rarity;
 };
 
 void init_dungeon(dungeon *d);

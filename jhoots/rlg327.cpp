@@ -3,6 +3,9 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #include "dungeon.h"
 #include "pc.h"
@@ -189,6 +192,90 @@ int main(int argc, char *argv[])
       }
     }
   }
+
+  //std::cout << "bet" << std::endl;
+  std::string s;
+  //int temp;
+  std::ifstream f("monster_desc.txt");
+
+ //check file marker
+  getline(f, s);
+  if(s != "RLG327 MONSTER DESCRIPTION 1") {
+    std::cout << "Wrong file" << std::endl;
+    return 0;
+  }
+  
+  while(1) {
+    while(1) {
+      getline(f, s);
+      if(s == "BEGIN MONSTER") {
+	std::cout << "" << std::endl;
+	break;
+      }
+    }
+    getline(f, s);
+    int currMon = 1;
+    while(currMon) {
+      f >> s; //gets next keyword
+      f.get();
+      if(s == "NAME"){
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "DESC") {
+        while(1) {
+	  //TODO: might have to find a way to check if the description lines are bigger than 77 bytes;
+	  getline(f, s);
+	  if(s == ".")
+	    break;
+	  std::cout << s << std::endl;
+	}
+      }
+      else if(s == "COLOR") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "SPEED") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "ABIL") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "HP") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "DAM") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "SYMB") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "RRTY") {
+	getline(f, s);
+	std::cout << s << std::endl;
+      }
+      else if(s == "END") {
+	currMon = 0;
+      }
+      else {
+	std::cout << "File Format incorrect"  << std::endl;
+	return -1;
+      }
+    }
+    getline(f, s);
+    if(!f.good())
+      break;
+  }
+
+  
+  
+ 
+ return 0;
 
   if (do_seed) {
     /* Allows me to generate more than one dungeon *

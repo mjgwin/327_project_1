@@ -5,6 +5,7 @@
 # include "dims.h"
 # include "character.h"
 # include <string>
+# include <vector>
 
 #define DUNGEON_X              80
 #define DUNGEON_Y              21
@@ -52,6 +53,27 @@ typedef struct room {
 
 class pc;
 
+class dice {
+  public:
+    int base;
+    int dice;
+    int sides;
+};
+
+class monsterDesc {
+  public:
+    std::string name;
+    std::vector<std::string> desc;
+    int *color;
+    int colorSize;
+    dice speed;
+    std::string abilities;
+    dice hp;
+    dice attackDam;
+    char symbol;
+    int rarity;
+};
+
 class dungeon {
  public:
   uint32_t num_rooms;
@@ -82,27 +104,10 @@ class dungeon {
   uint32_t time;
   uint32_t is_new;
   uint32_t quit;
+  monsterDesc *fileMonsters;
 };
 
-class dice {
-  public:
-    int base;
-    int dice;
-    int sides;
-};
 
-class monsterDescription {
-  public:
-    std::string name;
-    char desc[6][78];
-    int color;
-    dice speed;
-    int abilities;
-    dice hp;
-    dice attackDam;
-    char symbol;
-    int rarity;
-};
 
 void init_dungeon(dungeon *d);
 void new_dungeon(dungeon *d);

@@ -5,6 +5,7 @@
 # include "dims.h"
 # include "character.h"
 # include <string>
+# include <vector>
 
 #define DUNGEON_X              80
 #define DUNGEON_Y              21
@@ -45,12 +46,45 @@ enum __attribute__ ((__packed__)) terrain_type {
   ter_stairs_down
 };
 
+enum monAbility {
+  abil_smart,
+  abil_tele,
+  abil_tunnel,
+  abil_erratic,
+  abil_pass,
+  abil_pickup,
+  abil_destroy,
+  abil_uniq,
+  abil_boss
+};
+
 typedef struct room {
   pair_t position;
   pair_t size;
 } room_t;
 
 class pc;
+
+class dice {
+  public:
+    int base;
+    int dice;
+    int sides;
+};
+
+class monsterDesc {
+  public:
+    std::string name;
+    std::vector<std::string> desc;
+    int *color;
+    int colorSize;
+    dice speed;
+    std::vector<monAbility> abilities;
+    dice hp;
+    dice attackDam;
+    char symbol;
+    int rarity;
+};
 
 class dungeon {
  public:
@@ -82,27 +116,10 @@ class dungeon {
   uint32_t time;
   uint32_t is_new;
   uint32_t quit;
+  monsterDesc *fileMonsters;
 };
 
-class dice {
-  public:
-    int base;
-    int dice;
-    int sides;
-};
 
-class monsterDesc {
-  public:
-    std::string name;
-    char desc[6][78];
-    std::string color;
-    dice speed;
-    std::string abilities;
-    dice hp;
-    dice attackDam;
-    char symbol;
-    int rarity;
-};
 
 void init_dungeon(dungeon *d);
 void new_dungeon(dungeon *d);

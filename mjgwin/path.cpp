@@ -3,6 +3,7 @@
 #include "path.h"
 #include "dungeon.h"
 #include "utils.h"
+#include "pc.h"
 
 /* Ugly hack: There is no way to pass a pointer to the dungeon into the *
  * heap's comparitor funtion without modifying the heap.  Copying the   *
@@ -12,7 +13,7 @@
  * initialize it in dijkstra, and use it in the comparitor to get to    *
  * pc_distance.  Otherwise, pretend it doesn't exist, because it really *
  * is ugly.                                                             */
-static dungeon_t *dungeon;
+static dungeon *thedungeon;
 
 typedef struct path {
   heap_node_t *hn;
@@ -20,20 +21,20 @@ typedef struct path {
 } path_t;
 
 static int32_t dist_cmp(const void *key, const void *with) {
-  return ((int32_t) dungeon->pc_distance[((path_t *) key)->pos[dim_y]]
-                                        [((path_t *) key)->pos[dim_x]] -
-          (int32_t) dungeon->pc_distance[((path_t *) with)->pos[dim_y]]
-                                        [((path_t *) with)->pos[dim_x]]);
+  return ((int32_t) thedungeon->pc_distance[((path_t *) key)->pos[dim_y]]
+                                           [((path_t *) key)->pos[dim_x]] -
+          (int32_t) thedungeon->pc_distance[((path_t *) with)->pos[dim_y]]
+                                           [((path_t *) with)->pos[dim_x]]);
 }
 
 static int32_t tunnel_cmp(const void *key, const void *with) {
-  return ((int32_t) dungeon->pc_tunnel[((path_t *) key)->pos[dim_y]]
-                                      [((path_t *) key)->pos[dim_x]] -
-          (int32_t) dungeon->pc_tunnel[((path_t *) with)->pos[dim_y]]
-                                      [((path_t *) with)->pos[dim_x]]);
+  return ((int32_t) thedungeon->pc_tunnel[((path_t *) key)->pos[dim_y]]
+                                         [((path_t *) key)->pos[dim_x]] -
+          (int32_t) thedungeon->pc_tunnel[((path_t *) with)->pos[dim_y]]
+                                         [((path_t *) with)->pos[dim_x]]);
 }
 
-void dijkstra(dungeon_t *d)
+void dijkstra(dungeon *d)
 {
   /* Currently assumes that monsters only move on floors.  Will *
    * need to be modified for tunneling and pass-wall monsters.  */
@@ -45,7 +46,7 @@ void dijkstra(dungeon_t *d)
 
   if (!initialized) {
     initialized = 1;
-    dungeon = d;
+    thedungeon = d;
     for (y = 0; y < DUNGEON_Y; y++) {
       for (x = 0; x < DUNGEON_X; x++) {
         p[y][x].pos[dim_y] = y;
@@ -59,7 +60,7 @@ void dijkstra(dungeon_t *d)
       d->pc_distance[y][x] = 255;
     }
   }
-  d->pc_distance[d->pc.position[dim_y]][d->pc.position[dim_x]] = 0;
+  d->pc_distance[d->PC->position[dim_y]][d->PC->position[dim_x]] = 0;
 
   heap_init(&h, dist_cmp, NULL);
 
@@ -71,7 +72,7 @@ void dijkstra(dungeon_t *d)
     }
   }
 
-  while ((c = (path_t*)heap_remove_min(&h))) {
+  while ((c = (path_t *) heap_remove_min(&h))) {
     c->hn = NULL;
     if ((p[c->pos[dim_y] - 1][c->pos[dim_x] - 1].hn) &&
         (d->pc_distance[c->pos[dim_y] - 1][c->pos[dim_x] - 1] >
@@ -146,20 +147,20 @@ void dijkstra(dungeon_t *d)
 #define tunnel_movement_cost(x, y)                      \
   ((d->hardness[y][x] / 85) + 1)
 
-void dijkstra_tunnel(dungeon_t *d)
+void dijkstra_tunnel(dungeon *d)
 {
   /* Currently assumes that monsters only move on floors.  Will *
    * need to be modified for tunneling and pass-wall monsters.  */
 
   heap_t h;
   uint32_t x, y;
-  int size;
+  uint32_t size;
   static path_t p[DUNGEON_Y][DUNGEON_X], *c;
   static uint32_t initialized = 0;
 
   if (!initialized) {
     initialized = 1;
-    dungeon = d;
+    thedungeon = d;
     for (y = 0; y < DUNGEON_Y; y++) {
       for (x = 0; x < DUNGEON_X; x++) {
         p[y][x].pos[dim_y] = y;
@@ -173,7 +174,7 @@ void dijkstra_tunnel(dungeon_t *d)
       d->pc_tunnel[y][x] = 255;
     }
   }
-  d->pc_tunnel[d->pc.position[dim_y]][d->pc.position[dim_x]] = 0;
+  d->pc_tunnel[d->PC->position[dim_y]][d->PC->position[dim_x]] = 0;
 
   heap_init(&h, tunnel_cmp, NULL);
 
@@ -186,8 +187,8 @@ void dijkstra_tunnel(dungeon_t *d)
   }
 
   size = h.size;
-  while ((c = (path_t*)heap_remove_min(&h))) {
-    if (--size != (int)h.size) {
+  while ((c = (path_t *) heap_remove_min(&h))) {
+    if (--size != h.size) {
       exit(1);
     }
     c->hn = NULL;

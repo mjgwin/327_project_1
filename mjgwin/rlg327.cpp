@@ -3,6 +3,10 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 #include "dungeon.h"
 #include "pc.h"
@@ -74,12 +78,96 @@ void usage(char *name)
   exit(-1);
 }
 
+dice parse_file_dice(std::string diceStr){
+  dice currDice;
+  std::string delimiter1 = "+";
+  std::string delimiter2 = "d";
+	
+  std::string token;
+  std::string token2;
+	
+  size_t pos = 0;
+  size_t pos_2 = 0;
+
+  while ((pos = diceStr.find(delimiter1)) != std::string::npos) 
+  {
+	  // extract the first value
+	  token = diceStr.substr(0, pos);
+	  diceStr.erase(0, pos + delimiter1.length());
+	  currDice.base = std::stoi(token);
+  }	
+
+  while ((pos_2 = diceStr.find(delimiter2)) != std::string::npos) 
+  {
+	  token2 = diceStr.substr(0,pos_2);	
+	  diceStr.erase(0, pos_2 + delimiter2.length());
+	  currDice.dice = std::stoi(token2);
+  }
+
+  currDice.sides = std::stoi(diceStr);
+
+
+  //std::cout << currDice.base << std::endl;
+  //std::cout << currDice.dice << std::endl;
+  //std::cout << currDice.sides << std::endl;
+
+  return currDice;
+}
+
+
+monsterDesc parse_file_mon(std::string color,std::string desc, std::string name,std::string speed,
+			    std::string hp, std::string dam, std::string abil, std::string symb, std::string rrty){
+  monsterDesc currMon;
+  currMon.name = name;
+  std::stringstream desc_stream(desc);
+  int counter = 0;
+  while(desc_stream.good() && counter < 6){
+    std::string line;
+    getline(desc_stream, line, '\n');
+    int length = line.length();
+    if(length > 77) std::cout << "Parsing error: description over 78 characters" << std::endl;
+    strcpy(currMon.desc[counter], line.c_str());
+    counter++;
+  }
+  //color eventually need parsting to int
+  currMon.color = color;
+  dice speedDice = parse_file_dice(speed);
+  currMon.speed = speedDice;
+  //abilities eventually need parsing to int
+  currMon.abilities = abil;
+  dice hpDice = parse_file_dice(hp);
+  currMon.hp = hpDice;
+  dice attackDice = parse_file_dice(dam);
+  currMon.attackDam = attackDice;
+  currMon.symbol = symb[0];
+  currMon.rarity = std::stoi(rrty);
+  return currMon;
+}
+
+void print_file_mon(monsterDesc mon){
+  std::cout << "NAME " << mon.name << std::endl;
+  std::cout << "SYMB" << mon.symbol << std::endl;
+  std::cout << "COLOR " << mon.color << std::endl;
+  std::cout << "DESC" << std::endl;
+  for(int i = 0; i < 6; i++){
+     std::cout << mon.desc[i] << std::endl;
+  }
+  std::cout << "SPEED " << mon.speed.base << "+" << mon.speed.dice << "d" << mon.speed.sides << std::endl;
+  std::cout << "DAM " << mon.attackDam.base << "+" << mon.attackDam.dice << "d" << mon.attackDam.sides << std::endl;
+  std::cout << "HP " << mon.hp.base << "+" << mon.hp.dice << "d" << mon.hp.sides << std::endl;
+  std::cout << "ABIL " << mon.abilities << std::endl;
+   std::cout << "RRTY " << mon.rarity << std::endl;
+}
+
+
+
+
 int main(int argc, char *argv[])
 {
-  dungeon_t d;
+  dungeon d;
   time_t seed;
   struct timeval tv;
-  uint32_t i;
+  int32_t i;
   uint32_t do_load, do_save, do_seed, do_image, do_save_seed, do_save_image;
   uint32_t long_arg;
   char *save_file;
@@ -111,7 +199,7 @@ int main(int argc, char *argv[])
    * interesting test dungeons for you.                             */
  
  if (argc > 1) {
-   for (i = 1, long_arg = 0; (int) i < argc; i++, long_arg = 0) {
+    for (i = 1, long_arg = 0; i < argc; i++, long_arg = 0) {
       if (argv[i][0] == '-') { /* All switches start with a dash */
         if (argv[i][1] == '-') {
           argv[i]++;    /* Make the argument have a single dash so we can */
@@ -121,7 +209,7 @@ int main(int argc, char *argv[])
         case 'n':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-nummon")) ||
-              argc < (int)++i + 1 /* No more arguments */ ||
+              argc < ++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%hu", &d.max_monsters)) {
             usage(argv[0]);
           }
@@ -129,7 +217,7 @@ int main(int argc, char *argv[])
         case 'r':
           if ((!long_arg && argv[i][2]) ||
               (long_arg && strcmp(argv[i], "-rand")) ||
-              argc < (int) ++i + 1 /* No more arguments */ ||
+              argc < ++i + 1 /* No more arguments */ ||
               !sscanf(argv[i], "%lu", &seed) /* Argument is not an integer */) {
             usage(argv[0]);
           }
@@ -141,7 +229,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_load = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             load_file = argv[++i];
@@ -153,7 +241,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_save = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll save to it.  If it is "seed", we'll save to    *
 	     * <the current seed>.rlg327.  If it is "image", we'll  *
@@ -175,7 +263,7 @@ int main(int argc, char *argv[])
             usage(argv[0]);
           }
           do_image = 1;
-          if ((argc > (int)i + 1) && argv[i + 1][0] != '-') {
+          if ((argc > i + 1) && argv[i + 1][0] != '-') {
             /* There is another argument, and it's not a switch, so *
              * we'll treat it as a save file and try to load it.    */
             pgm_file = argv[++i];
@@ -189,6 +277,137 @@ int main(int argc, char *argv[])
       }
     }
   }
+
+  std::ifstream temp("monster_desc.txt");
+  std::string si;
+  int size = 0;
+  while(temp.good()) {
+    getline(temp, si);
+    if(si == "BEGIN MONSTER") {
+      ++size;
+    }
+  }
+  std::cout << size << std::endl;
+
+  std::string s, color, desc, name, speed, hp, dam, abil, symb, rrty;
+  std::ifstream f("monster_desc.txt");
+
+  monsterDesc fileMonsters[size];
+
+ 
+  //checks file marker
+  getline(f, s);
+  if(s != "RLG327 MONSTER DESCRIPTION 1") {
+    std::cout << "Wrong file" << std::endl;
+    return 0;
+  }
+
+  //gets us to the first keyword
+  while(1) {
+    getline(f, s);
+    if(s == "BEGIN MONSTER") {
+      break;
+    }
+  }
+
+  
+  //outer loop prints
+  while(1) {
+    int currMon = 1;
+    int monIndex = 0;
+    //keyword parsing
+    while(currMon) {
+      f >> s; //gets next keyword
+      f.get();
+      if(s == "NAME"){
+	getline(f, name);
+      }
+      else if(s == "DESC") {
+        while(1) {
+	  getline(f, s);
+	  if(s == ".") {
+	    desc.pop_back();
+	    break;
+	  }
+	  desc = desc + s + "\n";
+	}
+      }
+      else if(s == "COLOR") {
+	getline(f, color);
+      }
+      else if(s == "SPEED") {
+	getline(f, speed);
+      }
+      else if(s == "ABIL") {
+	getline(f, abil);
+      }
+      else if(s == "HP") {
+	getline(f, hp);
+      }
+      else if(s == "DAM") {
+	getline(f, dam);
+      }
+      else if(s == "SYMB") {
+	getline(f, symb);
+      }
+      else if(s == "RRTY") {
+	getline(f, rrty);
+      }
+      else if(s == "END") {
+	//set curmon to zero because we are at the end of the mon info
+	currMon = 0;
+      }
+      else {
+	std::cout << "File Format incorrect"  << std::endl;
+	return -1;
+      }
+    }
+    //check if file is complete
+    getline(f, s);
+    if(!f.good()) {
+      //std::cout << name << std::endl;
+      //std::cout << desc << std::endl;
+      //std::cout << symb << std::endl;
+      //std::cout << color << std::endl;
+      //std::cout << speed << std::endl;
+      //std::cout << abil << std::endl;
+      //std::cout << hp << std::endl;
+      //std::cout << dam << std::endl;
+      //std::cout << rrty << std::endl;
+      monsterDesc temp = parse_file_mon(color, desc, name, speed, hp, dam, abil, symb, rrty);
+      fileMonsters[monIndex] = temp;
+      print_file_mon(temp);
+      break;
+    }
+
+    //if file is not complete bring us to the next keyword and print values
+    getline(f, s);
+    if(s == "BEGIN MONSTER") {
+      //std::cout << name << std::endl;
+      //std::cout << desc << std::endl;
+      //std::cout << symb << std::endl;
+      //std::cout << color << std::endl;
+      //std::cout << speed << std::endl;
+      //std::cout << abil << std::endl;
+      //std::cout << hp << std::endl;
+      // std::cout << dam << std::endl;
+      //std::cout << rrty << std::endl;
+      //std::cout << "" << std::endl;
+      monsterDesc temp = parse_file_mon(color, desc, name, speed, hp, dam, abil, symb, rrty);
+      print_file_mon(temp);
+      fileMonsters[monIndex] = temp;
+      monIndex++;
+      desc = "";
+     
+    }
+
+    
+  }
+
+  
+  
+ 
+ return 0;
 
   if (do_seed) {
     /* Allows me to generate more than one dungeon *
@@ -209,31 +428,26 @@ int main(int argc, char *argv[])
   } else {
     gen_dungeon(&d);
   }
-  
+
   /* Ignoring PC position in saved dungeons.  Not a bug. */
   config_pc(&d);
-   //creates fog map for renderer to use
-  io_generate_fog_map(&d);
   gen_monsters(&d);
-  
-  io_display(&d, io_get_fog_status());
+
+  io_display(&d);
   if (!do_load && !do_image) {
     io_queue_message("Seed is %u.", seed);
   }
- 
- 
-  
   while (pc_is_alive(&d) && dungeon_has_npcs(&d) && !d.quit) {
     do_moves(&d);
   }
-  io_display(&d, io_get_fog_status());
+  io_display(&d);
 
   io_reset_terminal();
 
   if (do_save) {
     if (do_save_seed) {
        /* 10 bytes for number, plus dot, extention and null terminator. */
-      save_file =(char*) malloc(18);
+      save_file = (char *) malloc(18);
       sprintf(save_file, "%ld.rlg327", seed);
     }
     if (do_save_image) {
@@ -242,7 +456,7 @@ int main(int argc, char *argv[])
 	do_save_image = 0;
       } else {
 	/* Extension of 3 characters longer than image extension + null. */
-	save_file = (char*)malloc(strlen(pgm_file) + 4);
+	save_file = (char *) malloc(strlen(pgm_file) + 4);
 	strcpy(save_file, pgm_file);
 	strcpy(strchr(save_file, '.') + 1, "rlg327");
       }
@@ -258,9 +472,14 @@ int main(int argc, char *argv[])
   printf("You defended your life in the face of %u deadly beasts.\n"
          "You avenged the cruel and untimely murders of %u "
          "peaceful dungeon residents.\n",
-         d.pc.kills[kill_direct], d.pc.kills[kill_avenged]);
+         d.PC->kills[kill_direct], d.PC->kills[kill_avenged]);
 
-  pc_delete(d.pc.pc);
+  if (pc_is_alive(&d)) {
+    /* If the PC is dead, it's in the move heap and will get automatically *
+     * deleted when the heap destructs.  In that case, we can't call       *
+     * delete_pc(), because it will lead to a double delete.               */
+    character_delete(d.PC);
+  }
 
   delete_dungeon(&d);
 

@@ -5,8 +5,8 @@ RM = rm -f
 
 TERM = "\"S2021\""
 
-CFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
-CXXFLAGS = -Wall -Werror -ggdb -funroll-loops -DTERM=$(TERM)
+CFLAGS = -Wall -Werror -ggdb3 -funroll-loops -DTERM=$(TERM)
+CXXFLAGS = -Wall -Werror -ggdb3 -funroll-loops -DTERM=$(TERM)
 
 LDFLAGS = -lncurses
 
@@ -42,4 +42,4 @@ clobber: clean
 
 etags:
 	@$(ECHO) Updating TAGS
-	@etags *.[ch]
+	@etags *.[ch] *.cpp

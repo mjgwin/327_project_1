@@ -6,6 +6,8 @@
 # include <vector>
 # include <string>
 # include "dice.h"
+# include "npc.h"
+# include "item.h"
 
 typedef struct dungeon dungeon_t;
 
@@ -47,6 +49,8 @@ class monster_description {
   dice speed, hitpoints, damage;
   uint32_t rarity;
  public:
+  int onFloor;
+  int isDead;
   monster_description() : name(),       description(), symbol(0),   color(0),
                           abilities(0), speed(),       hitpoints(), damage(),
                           rarity(0)
@@ -63,6 +67,8 @@ class monster_description {
            const uint32_t rarity);
   std::ostream &print(std::ostream &o);
   char get_symbol() { return symbol; }
+  int get_rrty() { return rarity; }
+  npc *generateMonster(void);
 };
 
 class object_description {
@@ -110,9 +116,13 @@ class object_description {
   inline const dice &get_speed() const { return speed; }
   inline const dice &get_attribute() const { return attribute; }
   inline const dice &get_value() const { return value; }
+  item *generateItem(void);
 };
+void resetOnFloor(dungeon_t *d);
+char typeToSymbol(object_type t);
 
 std::ostream &operator<<(std::ostream &o, monster_description &m);
 std::ostream &operator<<(std::ostream &o, object_description &od);
+
 
 #endif

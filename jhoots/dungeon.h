@@ -55,6 +55,10 @@ typedef struct room {
 } room_t;
 
 class pc;
+class monster_description;
+class object_description;
+class item;
+
 
 class dungeon {
  public:
@@ -78,6 +82,7 @@ class dungeon {
   uint8_t pc_distance[DUNGEON_Y][DUNGEON_X];
   uint8_t pc_tunnel[DUNGEON_Y][DUNGEON_X];
   character *character_map[DUNGEON_Y][DUNGEON_X];
+  item *item_map[DUNGEON_Y][DUNGEON_X];
   pc *PC;
   heap_t events;
   uint16_t num_monsters;
@@ -93,6 +98,7 @@ class dungeon {
   uint32_t quit;
   std::vector<monster_description> monster_descriptions;
   std::vector<object_description> object_descriptions;
+  uint32_t numAlive;
 };
 
 void init_dungeon(dungeon *d);

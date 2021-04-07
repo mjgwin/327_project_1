@@ -2,8 +2,10 @@
 # define CHARACTER_H
 
 # include <stdint.h>
+# include <vector>
 
 # include "dims.h"
+# include "dice.h"
 
 typedef enum kill_type {
   kill_direct,
@@ -16,6 +18,9 @@ class character {
   char symbol;
   pair_t position;
   int32_t speed;
+  dice damage;
+  int32_t hitpoints;
+  
   uint32_t alive;
   /* Characters use to have a next_turn for the move queue.  Now that it is *
    * an event queue, there's no need for that here.  Instead it's in the    *

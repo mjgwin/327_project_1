@@ -15,6 +15,7 @@
 #include "dice.h"
 #include "character.h"
 #include "utils.h"
+#include "item.h"
 
 #define MONSTER_FILE_SEMANTIC          "RLG327 MONSTER DESCRIPTION"
 #define MONSTER_FILE_VERSION           1U
@@ -1061,4 +1062,68 @@ return o << hit << std::endl << damage << std::endl << dodge << std::endl
 std::ostream &operator<<(std::ostream &o, object_description &od)
 {
   return od.print(o);
+}
+
+npc* monster_description::generateMonster(void) {
+  npc *n;
+  n = new npc;
+  n->symbol = symbol;
+  n->speed = speed.roll();
+  n->damage = damage;
+  n->hitpoints = hitpoints.roll();
+  n->color = color.at(0);
+  n->characteristics = abilities;
+  return n;
+}
+
+item* object_description::generateItem(void) {
+  item *i;
+  i = new item;
+  i->symbol = typeToSymbol(type);
+  i->color = color;
+  i->weight = weight.roll();
+  i->hitpoints = hit.roll();
+  i->damage = damage.roll();
+  i->attribute = attribute.roll();
+  i->value = value.roll();
+  i->dodge = dodge.roll();
+  i->defence = defence.roll();
+  i->speed = speed.roll();
+  i->rarity = rarity;
+  i->artifact = artifact;
+  return i;
+}
+
+void resetOnFloor(dungeon_t *d) {
+  int size = d->monster_descriptions.size();
+  int i;
+  for(i = 0; i < size; i++) {
+    d->monster_descriptions.at(i).onFloor = 0;
+  }
+  return;
+}
+
+char typeToSymbol(object_type t){
+  if(t == 0) return '*';
+  else if(t == 1) return '|';
+  else if(t == 2) return ')';
+  else if(t == 3) return '}';
+  else if(t == 4) return '[';
+  else if(t == 5) return ']';
+  else if(t == 6) return '(';
+  else if(t == 7) return '{';
+  else if(t == 8) return '\\';
+  else if(t == 9) return '=';
+  else if(t == 10) return '"';
+  else if(t == 11) return '_';
+  else if(t == 12) return '~';
+  else if(t == 13) return '?';
+  else if(t == 14) return '!';
+  else if(t == 15) return '$';
+  else if(t == 16) return '/';
+  else if(t == 17) return ',';
+  else if(t == 18) return '-';
+  else if(t == 19) return '%';
+  else if(t == 20) return '&';
+  return '1';
 }

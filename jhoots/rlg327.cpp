@@ -87,10 +87,11 @@ int main(int argc, char *argv[])
   char *pgm_file;
   
   parse_descriptions(&d);
-  print_descriptions(&d);
-  destroy_descriptions(&d);
+  d.numAlive = d.monster_descriptions.size();
+  //print_descriptions(&d);
+  //destroy_descriptions(&d);
 
-  return 0;
+  //return 0;
   
   /* Default behavior: Seed with the time, generate a new dungeon, *
    * and don't write to disk.                                      */
@@ -257,6 +258,7 @@ int main(int argc, char *argv[])
          "You avenged the cruel and untimely murders of %u "
          "peaceful dungeon residents.\n",
          d.PC->kills[kill_direct], d.PC->kills[kill_avenged]);
+
 
   if (pc_is_alive(&d)) {
     /* If the PC is dead, it's in the move heap and will get automatically *

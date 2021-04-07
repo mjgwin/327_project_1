@@ -1,11 +1,12 @@
 #ifndef DUNGEON_H
 # define DUNGEON_H
 
+# include <vector>
+
 # include "heap.h"
 # include "dims.h"
 # include "character.h"
-# include <string>
-# include <vector>
+# include "descriptions.h"
 
 #define DUNGEON_X              80
 #define DUNGEON_Y              21
@@ -25,6 +26,8 @@
 #define DUNGEON_SAVE_FILE      "dungeon"
 #define DUNGEON_SAVE_SEMANTIC  "RLG327-" TERM
 #define DUNGEON_SAVE_VERSION   0U
+#define MONSTER_DESC_FILE      "monster_desc.txt"
+#define OBJECT_DESC_FILE       "object_desc.txt"
 
 #define mappair(pair) (d->map[pair[dim_y]][pair[dim_x]])
 #define mapxy(x, y) (d->map[y][x])
@@ -53,29 +56,13 @@ typedef struct room {
 
 class pc;
 
-class dice {
-  public:
-    int base;
-    int dice;
-    int sides;
-};
-
-class monsterDesc {
-  public:
-    std::string name;
-    std::vector<std::string> desc;
-    int *color;
-    int colorSize;
-    dice speed;
-    std::string abilities;
-    dice hp;
-    dice attackDam;
-    char symbol;
-    int rarity;
-};
-
 class dungeon {
  public:
+  dungeon() : num_rooms(0), rooms(0), map{ter_wall}, hardness{0},
+              pc_distance{0}, pc_tunnel{0}, character_map{0}, PC(0),
+              num_monsters(0), max_monsters(0), character_sequence_number(0),
+              time(0), is_new(0), quit(0), monster_descriptions(),
+              object_descriptions() {}
   uint32_t num_rooms;
   room_t *rooms;
   terrain_type map[DUNGEON_Y][DUNGEON_X];
@@ -104,10 +91,9 @@ class dungeon {
   uint32_t time;
   uint32_t is_new;
   uint32_t quit;
-  monsterDesc *fileMonsters;
+  std::vector<monster_description> monster_descriptions;
+  std::vector<object_description> object_descriptions;
 };
-
-
 
 void init_dungeon(dungeon *d);
 void new_dungeon(dungeon *d);

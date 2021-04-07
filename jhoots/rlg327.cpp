@@ -3,11 +3,6 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-#include <ncurses.h>
 
 #include "dungeon.h"
 #include "pc.h"
@@ -79,167 +74,6 @@ void usage(char *name)
   exit(-1);
 }
 
-int color_to_int(std::string color) {
-  if(color == "BLACK")
-    return COLOR_BLACK;
-  else if(color == "RED")
-    return COLOR_RED;
-  else if(color == "GREEN")
-    return COLOR_GREEN;
-  else if(color == "YELLOW")
-    return COLOR_YELLOW;
-  else if(color == "BLUE")
-    return COLOR_BLUE;
-  else if(color == "MAGENTA")
-    return COLOR_MAGENTA;
-  else if(color == "CYAN")
-    return COLOR_CYAN;
-  else if(color == "WHITE")
-    return COLOR_WHITE;
-
-  std::cout << "Error while parsing color: " + color + " not found" << std::endl;
-  return -1;
-}
-
-std::string int_to_color(int color) {
-  if(color == COLOR_BLACK)
-    return "BLACK";
-  else if(color == COLOR_RED)
-    return "RED";
-  else if(color == COLOR_GREEN)
-    return "GREEN";
-  else if(color == COLOR_YELLOW)
-    return "YELLOW";
-  else if(color == COLOR_BLUE)
-    return "BLUE";
-  else if(color == COLOR_MAGENTA)
-    return "MAGENTA";
-  else if(color == COLOR_CYAN)
-    return "CYAN";
-  else if(color == COLOR_WHITE)
-    return "WHITE";
-
-  std::cout << "Error while printing: " << color << " is not a valid int" << std::endl;
-  return "";
-}
-  
-
-dice parse_file_dice(std::string diceStr){
-  dice currDice;
-  std::string delimiter1 = "+";
-  std::string delimiter2 = "d";
-	
-  std::string token;
-  std::string token2;
-	
-  size_t pos = 0;
-  size_t pos_2 = 0;
-
-  while ((pos = diceStr.find(delimiter1)) != std::string::npos) 
-  {
-	  // extract the first value
-	  token = diceStr.substr(0, pos);
-	  diceStr.erase(0, pos + delimiter1.length());
-	  currDice.base = std::stoi(token);
-  }	
-
-  while ((pos_2 = diceStr.find(delimiter2)) != std::string::npos) 
-  {
-	  token2 = diceStr.substr(0,pos_2);	
-	  diceStr.erase(0, pos_2 + delimiter2.length());
-	  currDice.dice = std::stoi(token2);
-  }
-
-  currDice.sides = std::stoi(diceStr);
-
-
-  //std::cout << currDice.base << std::endl;
-  //std::cout << currDice.dice << std::endl;
-  //std::cout << currDice.sides << std::endl;
-
-  return currDice;
-}
-
-
-monsterDesc parse_file_mon(std::string color,std::string desc, std::string name,std::string speed,
-			   std::string hp, std::string dam, std::string abil, std::string symb, std::string rrty, int descSize){
-  //parse name
-  monsterDesc currMon;
-  currMon.name = name;
-
-  //parse description
-  std::stringstream desc_stream(desc);
-  int counter = 0;
-  while(desc_stream.good() && counter < descSize){
-    std::string line;
-    getline(desc_stream, line, '\n');
-    int length = line.length();
-    if(length > 77) std::cout << "Parsing error: description over 78 characters" << std::endl;
-    currMon.desc.push_back(line);
-    counter++;
-  }
-  
-  //parse color
-  int i = 0;
-  std::istringstream s1(color);
-  std::string s;
-  int colorAmount = 0;
-  while(s1 >> s) {
-    ++colorAmount;
-  }
-  currMon.color = (int*) malloc(sizeof(int) * colorAmount);
-  currMon.colorSize = colorAmount;
-  std::istringstream s2(color);
-  while (s2 >> s) {
-    currMon.color[i++] = color_to_int(s);
-  }
-  
-  //parse speed
-  dice speedDice = parse_file_dice(speed);
-  currMon.speed = speedDice;
-  
-  //TODO: abilities eventually need parsing to int
-  currMon.abilities = abil;
-
-  //parse hp
-  dice hpDice = parse_file_dice(hp);
-  currMon.hp = hpDice;
-
-  //parse attack
-  dice attackDice = parse_file_dice(dam);
-  currMon.attackDam = attackDice;
-
-  //parse symbol
-  currMon.symbol = symb[0];
-
-  //parse rarity
-  currMon.rarity = std::stoi(rrty);
-
-  return currMon;
-}
-
-void print_file_mon(monsterDesc mon){
-  std::cout << mon.name << std::endl;
-  for(int i = 0; i < (int) mon.desc.size(); i++){
-     std::cout << mon.desc[i] << std::endl;
-  }
-  std::cout << mon.symbol << std::endl;
-
-  std::string color;
-  for(int i = 0; i < mon.colorSize; i++) {
-    color = color + int_to_color(mon.color[i]) + " ";
-  }
-  std::cout << color << std::endl;
-  std::cout << mon.speed.base << "+" << mon.speed.dice << "d" << mon.speed.sides << std::endl;
-  std::cout << mon.abilities << std::endl;
-  std::cout << mon.hp.base << "+" << mon.hp.dice << "d" << mon.hp.sides << std::endl;
-  std::cout << mon.attackDam.base << "+" << mon.attackDam.dice << "d" << mon.attackDam.sides << std::endl;
-  std::cout << mon.rarity << std::endl;
-}
-
-
-
-
 int main(int argc, char *argv[])
 {
   dungeon d;
@@ -252,8 +86,11 @@ int main(int argc, char *argv[])
   char *load_file;
   char *pgm_file;
   
-  /* Quiet a false positive from valgrind. */
-  memset(&d, 0, sizeof (d));
+  parse_descriptions(&d);
+  print_descriptions(&d);
+  destroy_descriptions(&d);
+
+  return 0;
   
   /* Default behavior: Seed with the time, generate a new dungeon, *
    * and don't write to disk.                                      */
@@ -355,118 +192,6 @@ int main(int argc, char *argv[])
       }
     }
   }
-
-  std::ifstream temp("monster_desc.txt");
-  std::string si;
-  int size = 0;
-  while(temp.good()) {
-    getline(temp, si);
-    if(si == "BEGIN MONSTER") {
-      ++size;
-    }
-  }
-  std::cout << size << std::endl;
-
-  std::string s, color, desc, name, speed, hp, dam, abil, symb, rrty;
-  std::ifstream f("monster_desc.txt");
-
-  d.fileMonsters = (monsterDesc*) malloc(sizeof(monsterDesc) * size);
-
- 
-  //checks file marker
-  getline(f, s);
-  if(s != "RLG327 MONSTER DESCRIPTION 1") {
-    std::cout << "Wrong file" << std::endl;
-    return 0;
-  }
-
-  //gets us to the first keyword
-  while(1) {
-    getline(f, s);
-    if(s == "BEGIN MONSTER") {
-      break;
-    }
-  }
-
-  int monIndex = 0;
-  //outer loop prints
-  while(1) {
-    int currMon = 1;
-    int descSize = 0;
-    //keyword parsing
-    while(currMon) {
-      f >> s; //gets next keyword
-      f.get();
-      if(s == "NAME"){
-	getline(f, name);
-      }
-      else if(s == "DESC") {
-        while(1) {
-	  getline(f, s);
-	  if(s == ".") {
-	    desc.pop_back();
-	    break;
-	  }
-	  desc = desc + s + "\n";
-	  ++descSize;
-	}
-      }
-      else if(s == "COLOR") {
-	getline(f, color);
-      }
-      else if(s == "SPEED") {
-	getline(f, speed);
-      }
-      else if(s == "ABIL") {
-	getline(f, abil);
-      }
-      else if(s == "HP") {
-	getline(f, hp);
-      }
-      else if(s == "DAM") {
-	getline(f, dam);
-      }
-      else if(s == "SYMB") {
-	getline(f, symb);
-      }
-      else if(s == "RRTY") {
-	getline(f, rrty);
-      }
-      else if(s == "END") {
-	//set curmon to zero because we are at the end of the mon info
-	currMon = 0;
-      }
-      else {
-	std::cout << "File Format incorrect"  << std::endl;
-	return -1;
-      }
-    }
-    //check if file is complete
-    getline(f, s);
-    if(!f.good()) {
-      monsterDesc temp = parse_file_mon(color, desc, name, speed, hp, dam, abil, symb, rrty, descSize);
-      d.fileMonsters[monIndex++] = temp;
-      break;
-    }
-
-    //if file is not complete bring us to the next keyword and print values
-    getline(f, s);
-    if(s == "BEGIN MONSTER") {
-      monsterDesc temp = parse_file_mon(color, desc, name, speed, hp, dam, abil, symb, rrty, descSize);
-      d.fileMonsters[monIndex++] = temp;
-      desc = "";
-    }
-
-    
-  }
-
-  for(i = 0; i < monIndex; i++) {
-    std::cout << "" << std::endl;
-    print_file_mon(d.fileMonsters[i]);
-  }
-  
- 
- return 0;
 
   if (do_seed) {
     /* Allows me to generate more than one dungeon *

@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
   char *pgm_file;
   
   parse_descriptions(&d);
-  d.numAlive = d.monster_descriptions.size();
+  //d.numAlive = d.monster_descriptions.size();
   //print_descriptions(&d);
   //destroy_descriptions(&d);
 
@@ -214,9 +214,22 @@ int main(int argc, char *argv[])
     gen_dungeon(&d);
   }
 
+  for(int j = 0; j < DUNGEON_Y; j++) {
+    for(i = 0; i < DUNGEON_X; i++) {
+      if(d.item_map[j][i]) {
+	//printf("made it");
+        d.item_map[j][i] = NULL;
+      }
+    }
+  }
+
+  
   /* Ignoring PC position in saved dungeons.  Not a bug. */
   config_pc(&d);
   gen_monsters(&d);
+  gen_items(&d);
+
+  //return 0;
 
   io_display(&d);
   if (!do_load && !do_image) {
@@ -266,6 +279,8 @@ int main(int argc, char *argv[])
      * delete_pc(), because it will lead to a double delete.               */
     character_delete(d.PC);
   }
+
+  destroy_descriptions(&d);
 
   delete_dungeon(&d);
 

@@ -80,6 +80,7 @@ class object_description {
   bool artifact;
   uint32_t rarity;
  public:
+  int onFloor;
   object_description() : name(),    description(), type(objtype_no_type),
                          color(0),  hit(),         damage(),
                          dodge(),   defence(),     weight(),
@@ -116,6 +117,8 @@ class object_description {
   inline const dice &get_speed() const { return speed; }
   inline const dice &get_attribute() const { return attribute; }
   inline const dice &get_value() const { return value; }
+  int get_rrty() { return rarity; }
+  int get_artifact() { return artifact; }
   item *generateItem(void);
 };
 void resetOnFloor(dungeon_t *d);

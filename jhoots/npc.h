@@ -44,6 +44,7 @@
 
 typedef uint32_t npc_characteristics_t;
 
+
 class npc : public character {
  public:
   npc_characteristics_t characteristics;

@@ -80,8 +80,48 @@ void gen_monsters(dungeon *d)
 }
 
 void gen_items(dungeon *d) {
+  uint32_t i, toSelect, toCheck;
+  item *h;
+  uint32_t room;
+  pair_t p;
+  object_description o;
+  
+  for(i = 0; i < 10; i++) {
+    h = new item;
+    while(1) {
+      toSelect = rand() % d->object_descriptions.size();
+      o = d->object_descriptions.at(toSelect);
+      toCheck = rand() % 100;
+      if((int) toCheck >= o.get_rrty()) {
+	if(o.get_artifact() && o.onFloor == 1) continue;
+        d->monster_descriptions.at(toSelect).onFloor = 1;
+	break;
+      }
+    }
+
+    h = o.generateItem();
+    do {
+      room = rand_range(1, d->num_rooms - 1);
+      p[dim_y] = rand_range(d->rooms[room].position[dim_y],
+                            (d->rooms[room].position[dim_y] +
+                             d->rooms[room].size[dim_y] - 1));
+      p[dim_x] = rand_range(d->rooms[room].position[dim_x],
+                            (d->rooms[room].position[dim_x] +
+                             d->rooms[room].size[dim_x] - 1));
+    } while (d->item_map[p[dim_y]][p[dim_x]]);
+
+    h->position[dim_y] = p[dim_y];
+    h->position[dim_x] = p[dim_x];
+    d->item_map[p[dim_y]][p[dim_x]] = h;
+
+    printf("%c", h->symbol);
+  }
+  
+  
   return;
 }
+
+
 
 void npc_next_pos_rand_tunnel(dungeon *d, npc *c, pair_t next)
 {

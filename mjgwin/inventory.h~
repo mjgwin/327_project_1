@@ -1,0 +1,30 @@
+#ifndef INVENTORY_H
+#define INVENTORY_H
+
+#include "object.h"
+
+#define INV_WEAPON 0
+#define INV_OFFHAND 1
+#define INV_RANGED 2
+#define INV_ARMOR 3
+#define INV_HELMET 4
+#define INV_CLOAK 5
+#define INV_GLOVES 6
+#define INV_BOOTS 7
+#define INV_AMULET 8
+#define INV_LIGHT 9
+#define INV_RING_1 10
+#define INV_RING_2 11
+#define EQUIP_SLOTS 12
+#define FREE_SLOTS 10
+
+class inventory{
+ public:
+  int currItems;
+  object equip[EQUIP_SLOTS];
+  object free_inv[FREE_SLOTS];
+};
+
+
+
+#endif

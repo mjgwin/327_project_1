@@ -1,6 +1,6 @@
-#include <stdlib.h>
-
-#include "string.h"
+#include <cstdlib>
+#include <cstring>
+#include <ncurses.h>
 
 #include "dungeon.h"
 #include "pc.h"
@@ -8,6 +8,7 @@
 #include "move.h"
 #include "path.h"
 #include "io.h"
+#include "object.h"
 
 uint32_t pc_is_alive(dungeon *d)
 {
@@ -29,6 +30,8 @@ void place_pc(dungeon *d)
 
 void config_pc(dungeon *d)
 {
+  static dice pc_dice(0, 1, 4);
+  
   d->PC = new pc;
 
   d->PC->symbol = '@';
@@ -39,11 +42,43 @@ void config_pc(dungeon *d)
   d->PC->alive = 1;
   d->PC->sequence_number = 0;
   d->PC->kills[kill_direct] = d->PC->kills[kill_avenged] = 0;
-
+  d->PC->color.push_back(COLOR_WHITE);
+  d->PC->damage = &pc_dice;
+  d->PC->name = "Isabella Garcia-Shapiro";
+  //Assign defult hp for pc (100 from pc.h)
+  d->PC->hp = DEFAULT_HP;
   d->character_map[d->PC->position[dim_y]][d->PC->position[dim_x]] = d->PC;
-
+  //create inventory and set current items to 0
+  d->PC->numItems = 0;
   dijkstra(d);
   dijkstra_tunnel(d);
+}
+
+int pc_pickup_object(pc *p, object *o){
+  if(p->numItems < FREE_SLOTS){
+     p->free_inv[p->numItems] = o;
+     pc_notify_pickup(o, p->numItems);
+     p->numItems++;
+     return 1;
+  }else{
+    io_queue_message("Inventory full!");
+    return 0;
+  }
+}
+
+void pc_notify_pickup(object *o, int slot){
+//Send message for picked up object
+    const int buffer = 50;
+    char array1[buffer];
+    std::strncpy(array1, "Picked up ", buffer - 1);
+    std::string name = o->getName();
+    char array2[name.length() + 1];
+    strcpy(array2, name.c_str());
+    std::strncat(array1, array2, buffer - strlen(array1) - 1);
+    char slotNumber[20];
+    sprintf(slotNumber, " in slot #%d", slot);
+    strcat(array1, slotNumber);
+    io_queue_message(array1);
 }
 
 uint32_t pc_next_pos(dungeon *d, pair_t dir)
@@ -237,4 +272,11 @@ void pc_observe_terrain(pc *p, dungeon *d)
 int32_t is_illuminated(pc *p, int16_t y, int16_t x)
 {
   return p->visible[y][x];
+}
+
+void pc_see_object(character *the_pc, object *o)
+{
+  if (o) {
+    o->has_been_seen();
+  }
 }

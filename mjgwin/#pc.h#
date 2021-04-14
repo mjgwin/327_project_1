@@ -28,6 +28,7 @@
 
 class pc : public character {
  public:
+  pc() {}
   ~pc() {}
   int numItems;
   object *equip_inv[EQUIP_SLOTS];
@@ -39,8 +40,7 @@ class pc : public character {
 void pc_delete(pc *pc);
 uint32_t pc_is_alive(dungeon *d);
 void config_pc(dungeon *d);
-int pc_pickup_object(pc *p, object *o);
-void pc_notify_pickup(object *o, int slot);
+void pc_pickup_object(pc *p, object * o);
 uint32_t pc_next_pos(dungeon *d, pair_t dir);
 void place_pc(dungeon *d);
 uint32_t pc_in_room(dungeon *d, uint32_t room);

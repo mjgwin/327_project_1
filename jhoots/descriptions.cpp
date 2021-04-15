@@ -15,7 +15,7 @@
 #include "dice.h"
 #include "character.h"
 #include "utils.h"
-#include "item.h"
+#include "event.h"
 
 #define MONSTER_FILE_SEMANTIC          "RLG327 MONSTER DESCRIPTION"
 #define MONSTER_FILE_VERSION           1U
@@ -95,7 +95,7 @@ static const struct {
   { 0, objtype_no_type }
 };
 
-extern const char object_symbol[] = {
+const char object_symbol[] = {
   '*', /* objtype_no_type */
   '|', /* objtype_WEAPON */
   ')', /* objtype_OFFHAND */
@@ -818,7 +818,7 @@ static uint32_t parse_object_description(std::ifstream &f,
 }
 
 static uint32_t parse_monster_descriptions(std::ifstream &f,
-                                           dungeon_t *d,
+                                           dungeon *d,
                                            std::vector<monster_description> *v)
 {
   std::string s;
@@ -848,7 +848,7 @@ static uint32_t parse_monster_descriptions(std::ifstream &f,
 }
 
 static uint32_t parse_object_descriptions(std::ifstream &f,
-                                          dungeon_t *d,
+                                          dungeon *d,
                                           std::vector<object_description> *v)
 {
   std::string s;
@@ -877,7 +877,7 @@ static uint32_t parse_object_descriptions(std::ifstream &f,
   return 0;
 }
 
-uint32_t parse_descriptions(dungeon_t *d)
+uint32_t parse_descriptions(dungeon *d)
 {
   std::string file;
   std::ifstream f;
@@ -916,7 +916,7 @@ uint32_t parse_descriptions(dungeon_t *d)
   return retval;
 }
 
-uint32_t print_descriptions(dungeon_t *d)
+uint32_t print_descriptions(dungeon *d)
 {
   std::vector<monster_description> &m = d->monster_descriptions;
   std::vector<monster_description>::iterator mi;
@@ -995,7 +995,7 @@ std::ostream &operator<<(std::ostream &o, monster_description &m)
   return m.print(o);
 }
 
-uint32_t destroy_descriptions(dungeon_t *d)
+uint32_t destroy_descriptions(dungeon *d)
 {
   d->monster_descriptions.clear();
   d->object_descriptions.clear();
@@ -1064,66 +1064,21 @@ std::ostream &operator<<(std::ostream &o, object_description &od)
   return od.print(o);
 }
 
-npc* monster_description::generateMonster(void) {
+npc *monster_description::generate_monster(dungeon *d)
+{
   npc *n;
-  n = new npc;
-  n->symbol = symbol;
-  n->speed = speed.roll();
-  n->damage = damage;
-  n->hitpoints = hitpoints.roll();
-  n->color = color.at(0);
-  n->characteristics = abilities;
+  std::vector<monster_description> &v = d->monster_descriptions;
+  uint32_t i;
+
+  while (!v[(i = (rand() % v.size()))].can_be_generated() ||
+         !v[i].pass_rarity_roll())
+    ;
+
+  monster_description &m = v[i];
+
+  n = new npc(d, m);
+
+  heap_insert(&d->events, new_event(d, event_character_turn, n, 0));
+
   return n;
-}
-
-item* object_description::generateItem(void) {
-  item *i;
-  i = new item;
-  i->symbol = typeToSymbol(type);
-  i->color = color;
-  i->weight = weight.roll();
-  i->hitpoints = hit.roll();
-  i->damage = damage.roll();
-  i->attribute = attribute.roll();
-  i->value = value.roll();
-  i->dodge = dodge.roll();
-  i->defence = defence.roll();
-  i->speed = speed.roll();
-  i->rarity = rarity;
-  i->artifact = artifact;
-  return i;
-}
-
-void resetOnFloor(dungeon_t *d) {
-  int size = d->monster_descriptions.size();
-  int i;
-  for(i = 0; i < size; i++) {
-    d->monster_descriptions.at(i).onFloor = 0;
-  }
-  return;
-}
-
-char typeToSymbol(object_type t){
-  if(t == 0) return '*';
-  else if(t == 1) return '|';
-  else if(t == 2) return ')';
-  else if(t == 3) return '}';
-  else if(t == 4) return '[';
-  else if(t == 5) return ']';
-  else if(t == 6) return '(';
-  else if(t == 7) return '{';
-  else if(t == 8) return '\\';
-  else if(t == 9) return '=';
-  else if(t == 10) return '"';
-  else if(t == 11) return '_';
-  else if(t == 12) return '~';
-  else if(t == 13) return '?';
-  else if(t == 14) return '!';
-  else if(t == 15) return '$';
-  else if(t == 16) return '/';
-  else if(t == 17) return ',';
-  else if(t == 18) return '-';
-  else if(t == 19) return '%';
-  else if(t == 20) return '&';
-  return '1';
 }

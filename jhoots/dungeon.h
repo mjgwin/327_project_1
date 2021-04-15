@@ -22,6 +22,7 @@
 #define NPC_MIN_SPEED          5
 #define NPC_MAX_SPEED          20
 #define MAX_MONSTERS           15
+#define MAX_OBJECTS            15
 #define SAVE_DIR               ".rlg327"
 #define DUNGEON_SAVE_FILE      "dungeon"
 #define DUNGEON_SAVE_SEMANTIC  "RLG327-" TERM
@@ -35,6 +36,8 @@
 #define hardnessxy(x, y) (d->hardness[y][x])
 #define charpair(pair) (d->character_map[pair[dim_y]][pair[dim_x]])
 #define charxy(x, y) (d->character_map[y][x])
+#define objpair(pair) (d->objmap[pair[dim_y]][pair[dim_x]])
+#define objxy(x, y) (d->objmap[y][x])
 
 enum __attribute__ ((__packed__)) terrain_type {
   ter_debug,
@@ -55,10 +58,7 @@ typedef struct room {
 } room_t;
 
 class pc;
-class monster_description;
-class object_description;
-class item;
-
+class object;
 
 class dungeon {
  public:
@@ -82,12 +82,14 @@ class dungeon {
   uint8_t pc_distance[DUNGEON_Y][DUNGEON_X];
   uint8_t pc_tunnel[DUNGEON_Y][DUNGEON_X];
   character *character_map[DUNGEON_Y][DUNGEON_X];
-  item *item_map[DUNGEON_Y][DUNGEON_X];
+  object *objmap[DUNGEON_Y][DUNGEON_X];
   pc *PC;
   heap_t events;
   uint16_t num_monsters;
   uint16_t max_monsters;
-  uint32_t character_sequence_number;
+  uint16_t num_objects;
+  uint16_t max_objects;
+   uint32_t character_sequence_number;
   /* Game time isn't strictly necessary.  It's implicit in the turn number *
    * of the most recent thing removed from the event queue; however,       *
    * including it here--and keeping it up to date--provides a measure of   *
@@ -98,7 +100,6 @@ class dungeon {
   uint32_t quit;
   std::vector<monster_description> monster_descriptions;
   std::vector<object_description> object_descriptions;
-  uint32_t numAlive;
 };
 
 void init_dungeon(dungeon *d);
@@ -111,5 +112,7 @@ int read_dungeon(dungeon *d, char *file);
 int read_pgm(dungeon *d, char *pgm);
 void render_distance_map(dungeon *d);
 void render_tunnel_distance_map(dungeon *d);
+void init_dungeon(dungeon *d);
+void pc_see_object(character *the_pc, object *o);
 
 #endif

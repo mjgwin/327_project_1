@@ -1,14 +1,14 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 #include <endian.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <limits.h>
+#include <climits>
 #include <sys/time.h>
-#include <assert.h>
-#include <errno.h>
+#include <cassert>
+#include <cerrno>
 
 #include "heap.h"
 #include "dungeon.h"
@@ -17,6 +17,7 @@
 #include "pc.h"
 #include "npc.h"
 #include "io.h"
+#include "object.h"
 
 #define DUMP_HARDNESS_IMAGES 0
 
@@ -674,6 +675,7 @@ void delete_dungeon(dungeon *d)
   free(d->rooms);
   heap_delete(&d->events);
   memset(d->character_map, 0, sizeof (d->character_map));
+  destroy_objects(d);
 }
 
 void init_dungeon(dungeon *d)
@@ -681,6 +683,8 @@ void init_dungeon(dungeon *d)
   empty_dungeon(d);
   memset(&d->events, 0, sizeof (d->events));
   heap_init(&d->events, compare_events, event_delete);
+  memset(d->character_map, 0, sizeof (d->character_map));
+  memset(d->objmap, 0, sizeof (d->objmap));
 }
 
 int write_dungeon_map(dungeon *d, FILE *f)
@@ -1272,4 +1276,5 @@ void new_dungeon(dungeon *d)
   d->character_map[d->PC->position[dim_y]][d->PC->position[dim_x]] = d->PC;
 
   gen_monsters(d);
+  gen_objects(d);
 }

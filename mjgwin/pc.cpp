@@ -50,15 +50,32 @@ void config_pc(dungeon *d)
   d->character_map[d->PC->position[dim_y]][d->PC->position[dim_x]] = d->PC;
   //create inventory and set current items to 0
   d->PC->numItems = 0;
+  int i;
+  //fills arrays with nullptr so we can loop thru them without crashing
+  for(i = 0; i < FREE_SLOTS; i++){
+    d->PC->free_inv[i] = nullptr;
+  }
+  for(i = 0; i < EQUIP_SLOTS; i++){
+    d->PC->equip_inv[i] = nullptr;
+  }
+  
   dijkstra(d);
   dijkstra_tunnel(d);
 }
-
+//Places object in first availible space within free inventory
 int pc_pickup_object(pc *p, object *o){
+  
   if(p->numItems < FREE_SLOTS){
-     p->free_inv[p->numItems] = o;
-     pc_notify_pickup(o, p->numItems);
-     p->numItems++;
+    int i;
+    for(i = 0; i < FREE_SLOTS; i++){
+      if(p->free_inv[i] != nullptr) continue;
+      else{
+	 p->free_inv[i] = o;
+	 pc_notify_pickup(o, i);
+	 p->numItems++;
+	 break;
+      }
+    }
      return 1;
   }else{
     io_queue_message("Inventory full!");
@@ -66,8 +83,9 @@ int pc_pickup_object(pc *p, object *o){
   }
 }
 
+//Send message for picked up object and which slot
 void pc_notify_pickup(object *o, int slot){
-//Send message for picked up object
+
     const int buffer = 50;
     char array1[buffer];
     std::strncpy(array1, "Picked up ", buffer - 1);
@@ -80,6 +98,87 @@ void pc_notify_pickup(object *o, int slot){
     strcat(array1, slotNumber);
     io_queue_message(array1);
 }
+
+//Moves item from free inventory to equip inventory, swapping if needed
+void pc_equip_item(pc *p, int slot){
+  if(p->free_inv[slot] != nullptr){
+    object* obj = p->free_inv[slot];
+    object_type_t objType = obj->get_type_t();
+    switch(objType){
+     case objtype_no_type:
+       mvprintw(0,0, "                                                          ");
+       mvprintw(0,0,"Cannot equip: item has no type");
+       refresh();
+       break;
+     case objtype_WEAPON:
+       pc_inventory_swap(p, INV_WEAPON, slot);
+       break;
+     case objtype_OFFHAND:
+        pc_inventory_swap(p, INV_OFFHAND, slot);
+	break;
+     case objtype_RANGED:
+        pc_inventory_swap(p, INV_RANGED, slot);
+	break;
+     case objtype_LIGHT:
+        pc_inventory_swap(p, INV_LIGHT, slot);
+	break;
+     case objtype_ARMOR:
+        pc_inventory_swap(p, INV_ARMOR, slot);
+	break;
+     case objtype_HELMET:
+        pc_inventory_swap(p, INV_HELMET, slot);
+	break;
+     case objtype_CLOAK:
+        pc_inventory_swap(p, INV_CLOAK, slot);
+	break;
+     case objtype_GLOVES:
+        pc_inventory_swap(p, INV_GLOVES, slot);
+	break;
+     case objtype_BOOTS:
+        pc_inventory_swap(p, INV_BOOTS, slot);
+	break;
+     case objtype_AMULET:
+        pc_inventory_swap(p, INV_AMULET, slot);
+	break;
+     case objtype_RING:
+        pc_inventory_swap(p, INV_RING_1, slot);
+	break;
+     default:
+       mvprintw(0,0, "                                                          ");
+       mvprintw(0,0, "Error: item has no type");
+       refresh();
+    }
+
+    //int buffer = 25;
+    //char message[buffer];
+    //sprintf(message, "Equipped item from slot %d", slot);
+    //mvprintw(0,0,"%s", message);
+    //refresh();
+  }else{
+     mvprintw(0,0, "                                                          ");
+     mvprintw(0,0,"Cannot Equip: No item in selected slot");
+     refresh();
+  }
+}
+
+//Helper function to swap items or just equip them
+void pc_inventory_swap(pc *p, int flag, int slot){
+  if(p->equip_inv[flag]){
+    object *temp = p->equip_inv[flag];
+    p->equip_inv[flag] = p->free_inv[slot];
+    p->free_inv[slot] = temp;
+    mvprintw(0,0, "                                                          ");
+    mvprintw(0,0, "Swapped %s with %s", p->free_inv[slot]->get_name(), p->equip_inv[flag]->get_name());
+  }else{
+    p->equip_inv[flag] = p->free_inv[slot];
+    p->free_inv[slot] = nullptr;
+    mvprintw(0,0, "                                                          ");
+    mvprintw(0,0, "Equipped %s", p->equip_inv[flag]->get_name());
+    p->numItems--;
+  }
+  refresh();
+}
+
 
 uint32_t pc_next_pos(dungeon *d, pair_t dir)
 {
@@ -280,3 +379,4 @@ void pc_see_object(character *the_pc, object *o)
     o->has_been_seen();
   }
 }
+

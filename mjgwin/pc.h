@@ -41,6 +41,7 @@ uint32_t pc_is_alive(dungeon *d);
 void config_pc(dungeon *d);
 int pc_pickup_object(pc *p, object *o);
 void pc_notify_pickup(object *o, int slot);
+void pc_equip_item(pc *p, int slot);
 uint32_t pc_next_pos(dungeon *d, pair_t dir);
 void place_pc(dungeon *d);
 uint32_t pc_in_room(dungeon *d, uint32_t room);
@@ -50,5 +51,5 @@ void pc_init_known_terrain(pc *p);
 void pc_observe_terrain(pc *p, dungeon *d);
 int32_t is_illuminated(pc *p, int16_t y, int16_t x);
 void pc_reset_visibility(pc *p);
-
+void pc_inventory_swap(pc *p, int flag, int slot);
 #endif

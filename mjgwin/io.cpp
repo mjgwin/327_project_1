@@ -984,6 +984,24 @@ void io_handle_input(dungeon *d)
       io_list_monsters(d);
       fail_code = 1;
       break;
+    case 'w':
+      int slot;
+      slot = io_select_item();
+      if(slot != -1){
+	pc_equip_item(d->PC, slot);
+      }
+      fail_code = 1;
+      break;
+    case 'i':
+      io_list_free_inv(d);
+      io_display(d);
+      fail_code = 1;
+      break;
+    case 'e':
+      io_list_equip_inv(d);
+      io_display(d);
+      fail_code = 1;
+      break;
     case 'q':
       /* Demonstrate use of the message queue.  You can use this for *
        * printf()-style debugging (though gdb is probably a better   *
@@ -1019,4 +1037,120 @@ void io_handle_input(dungeon *d)
       fail_code = 1;
     }
   } while (fail_code);
+}
+//Display all free inventory slots
+void io_list_free_inv(dungeon *d){
+  clear();
+  mvprintw(0,0, "-----Free Inventory-----");
+  int i;
+  for(i = 0; i < FREE_SLOTS; i++){
+    if(d->PC->free_inv[i] != nullptr){
+      mvprintw(i+1, 0, "Slot %d : %s", i, d->PC->free_inv[i]->get_name());
+    }else{
+      mvprintw(i+1, 0, "Slot %d : empty", i);
+    }
+  }
+  refresh();
+  getch();
+}
+//Display all equip inventory slots
+void io_list_equip_inv(dungeon *d){
+  clear();
+  mvprintw(0,0, "-----Equip Inventory-----");
+  int i;
+  for(i = 0; i < EQUIP_SLOTS; i++){
+    if(d->PC->equip_inv[i] != nullptr){
+      mvprintw(i+1, 0, "%s : %s", io_get_slot_name(d, i), d->PC->equip_inv[i]->get_name());
+    }else{
+      mvprintw(i+1, 0, "%s : empty", io_get_slot_name(d,i));
+    }
+  }
+  refresh();
+  getch();
+}
+//Helper function to get string name of equip slot
+const char *io_get_slot_name(dungeon *d, int slot){
+  
+  std::string name;
+  
+  switch(slot){
+  case 0:
+    name = "WEAPON";
+    break;
+  case 1:
+    name = "OFFHAND";
+    break;
+  case 2:
+    name = "RANGED";
+    break;
+  case 3:
+    name = "ARMOR";
+    break;
+  case 4:
+    name = "HELMET";
+    break;
+  case 5:
+    name = "CLOAK";
+    break;
+  case 6:
+    name = "GLOVES";
+    break;
+  case 7:
+    name = "BOOTS";
+    break;
+  case 8:
+    name = "AMULET";
+    break;
+  case 9:
+    name = "LIGHT";
+    break;
+  case 10:
+    name = "RING_1";
+    break;
+  case 11:
+    name = "RING_2";
+    break;
+  default:
+    name = "Error: name not found";
+  }
+  return name.c_str();
+}
+
+//Prompts player to select inventory index 
+int io_select_item(){
+  uint32_t fail_code;
+  int key;
+  mvprintw(0,0,"                                                                 ");
+  mvprintw(0,0, "Select item slot 0-9");
+  refresh();
+  do{
+    switch(key = getch()){
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
+	fail_code = 0;
+	return key - '0';
+	break;
+      case 'e':
+	fail_code = 0;
+	break;
+      default:
+	mvprintw(0,0, "                                                          ");
+	mvprintw(0,0, "Invalid item slot, select item or press 'e' to exit");
+	refresh();
+	fail_code = 1;
+    }
+   
+    
+  }while(fail_code);
+  mvprintw(0,0, "                                                                ");
+  refresh();
+  return -1;
 }

@@ -968,9 +968,6 @@ void io_handle_input(dungeon *d)
       io_display(d);
       fail_code = 1;
       break;
-    case 'L':
-      fail_code = 1;
-      break;
     case 'g':
       /* Teleport the PC to a random place in the dungeon.              */
       io_teleport_pc(d);
@@ -1012,6 +1009,14 @@ void io_handle_input(dungeon *d)
       break;
     case 'x':
       io_expunge_item(d);
+      fail_code = 1;
+      break;
+    case 'I':
+      io_item_description(d);
+      fail_code = 1;
+      break;
+    case 'L':
+      io_look_monster(d);
       fail_code = 1;
       break;
     case 'q':
@@ -1288,5 +1293,222 @@ void io_expunge_item(dungeon *d) {
 }
 
 void io_item_description(dungeon *d) {
+  int slot = io_select_item(d);
+  if(d->PC->free_inv[slot] == nullptr) {
+    mvprintw(0,0, "                                                          ");
+    mvprintw(0,0, "No item present in the selected slot, press 'I' to try again");
+    refresh();
+    return;
+  }
+  object *obj = d->PC->free_inv[slot];
+  clear();
+  mvprintw(0, 0, "%s", obj->get_name());
+  mvprintw(1, 0, "%s", obj->get_description());
+  mvprintw(23, 0, "Press any key to return to game");
+  refresh();
+  getch();
+  clear();
+  refresh();
   return;
+}
+
+void io_look_monster(dungeon *d) {
+  pair_t dest;
+  int c;
+  fd_set readfs;
+  struct timeval tv;
+
+  io_display(d);
+
+  mvprintw(0, 0,
+           "Choose a location where a monster is standing. \nPress 't' to view description or 'esc' to exit.");
+
+  dest[dim_y] = d->PC->position[dim_y];
+  dest[dim_x] = d->PC->position[dim_x];
+
+  mvaddch(dest[dim_y] + 1, dest[dim_x], '*');
+  refresh();
+
+  do {
+    do{
+      FD_ZERO(&readfs);
+      FD_SET(STDIN_FILENO, &readfs);
+
+      tv.tv_sec = 0;
+      tv.tv_usec = 125000; /* An eigth of a second */
+
+      mod_redisplay_non_terrain(d, dest);
+    } while (!select(STDIN_FILENO + 1, &readfs, NULL, NULL, &tv));
+    /* Can simply draw the terrain when we move the cursor away, *
+     * because if it is a character or object, the refresh       *
+     * function will fix it for us.                              */
+    switch (pc_learned_terrain(d->PC, dest[dim_y], dest[dim_x])) {
+    case ter_wall:
+    case ter_wall_immutable:
+    case ter_unknown:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], ' ');
+      break;
+    case ter_floor:
+    case ter_floor_room:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '.');
+      break;
+    case ter_floor_hall:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '#');
+      break;
+    case ter_debug:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '*');
+      break;
+    case ter_stairs_up:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '<');
+      break;
+    case ter_stairs_down:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '>');
+      break;
+    default:
+ /* Use zero as an error symbol, since it stands out somewhat, and it's *
+  * not otherwise used.                                                 */
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '0');
+    }
+    switch ((c = getch())) {
+    case '7':
+    case 'y':
+    case KEY_HOME:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    case '8':
+    case 'k':
+    case KEY_UP:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      break;
+    case '9':
+    case 'u':
+    case KEY_PPAGE:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '6':
+    case 'l':
+    case KEY_RIGHT:
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '3':
+    case 'n':
+    case KEY_NPAGE:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '2':
+    case 'j':
+    case KEY_DOWN:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      break;
+    case '1':
+    case 'b':
+    case KEY_END:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    case '4':
+    case 'h':
+    case KEY_LEFT:
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    }
+  } while (c != 't' && c != 27);
+
+  if (c == 27) {
+    io_display(d);
+    return;
+  }
+
+  if(c == 't') {
+    if(d->character_map[dest[dim_y]][dest[dim_x]] == nullptr || (dest[dim_y] == d->PC->position[dim_y] && dest[dim_x] == d->PC->position[dim_x])) {
+      clear();
+      mvprintw(0, 0, "No monster on the position you selected");
+      mvprintw(23, 0, "press any key to return to the game");
+      refresh();
+      getch();
+      io_display(d);
+      return;
+    }
+    else {
+      character *n = d->character_map[dest[dim_y]][dest[dim_x]];
+      io_mon_info(n);
+      io_display(d);
+      return;
+    }
+  }
+
+  io_display(d);
+
+  return;
+}
+
+void io_mon_info(character *n) {
+  clear();
+  npc *m = dynamic_cast<npc*>(n);
+  mvprintw(0, 0, "Name: %s", m->name);
+  mvprintw(1, 0, "%s", m->description);
+  mvprintw(23, 0, "press any key to return to the game");
+  refresh();
+  getch();
+  return;
+}
+
+void mod_redisplay_non_terrain(dungeon *d, pair_t cursor) {
+  pair_t pos;
+  uint32_t color;
+  uint32_t illuminated;
+
+  for (pos[dim_y] = 0; pos[dim_y] < DUNGEON_Y; pos[dim_y]++) {
+    for (pos[dim_x] = 0; pos[dim_x] < DUNGEON_X; pos[dim_x]++) {
+      if ((illuminated = is_illuminated(d->PC,
+                                        pos[dim_y],
+                                        pos[dim_x]))) {
+        attron(A_BOLD);
+      }
+      if (cursor[dim_y] == pos[dim_y] && cursor[dim_x] == pos[dim_x]) {
+        mvaddch(pos[dim_y] + 1, pos[dim_x], '*');
+      } else if (d->character_map[pos[dim_y]][pos[dim_x]]&& illuminated) {
+        attron(COLOR_PAIR((color = d->character_map[pos[dim_y]]
+                                                   [pos[dim_x]]->get_color())));
+        mvaddch(pos[dim_y] + 1, pos[dim_x],
+                character_get_symbol(d->character_map[pos[dim_y]][pos[dim_x]]));
+        attroff(COLOR_PAIR(color));
+      } else if (d->objmap[pos[dim_y]][pos[dim_x]] && illuminated) {
+        attron(COLOR_PAIR(d->objmap[pos[dim_y]][pos[dim_x]]->get_color()));
+        mvaddch(pos[dim_y] + 1, pos[dim_x],
+                d->objmap[pos[dim_y]][pos[dim_x]]->get_symbol());
+        attroff(COLOR_PAIR(d->objmap[pos[dim_y]][pos[dim_x]]->get_color()));
+      }
+      attroff(A_BOLD);
+    }
+  }
+
+  refresh();
 }

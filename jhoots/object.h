@@ -2,6 +2,7 @@
 # define OBJECT_H
 
 # include <string>
+# include <cstring>
 
 # include "descriptions.h"
 # include "dims.h"
@@ -45,6 +46,7 @@ class object {
   void has_been_seen() { seen = true; }
   int16_t *get_position() { return position; }
   const std::string getName() { return name; }
+  const char *get_description() { return description.c_str(); }
 };
 
 void gen_objects(dungeon *d);

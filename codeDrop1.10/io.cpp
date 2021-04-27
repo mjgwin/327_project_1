@@ -1625,6 +1625,9 @@ void io_handle_input(dungeon *d)
       io_inspect_monster(d);
       fail_code = 1;
       break;
+    case 'z':
+      fail_code = io_ranged_attack(d);
+      break;
     case 'q':
       /* Demonstrate use of the message queue.  You can use this for *
        * printf()-style debugging (though gdb is probably a better   *
@@ -1661,3 +1664,224 @@ void io_handle_input(dungeon *d)
     }
   } while (fail_code);
 }
+
+int io_ranged_attack(dungeon *d) {
+  if(d->PC->eq[2] == NULL) {
+    clear();
+    mvprintw(0, 0, "You do not have a ranged weapon equipped");
+    mod_redisplay_non_terrain(d, d->PC->position);
+    mvprintw(23, 0, "Press any key to return to the game");
+    refresh();
+    return 1;
+  }
+  else {
+  pair_t dest;
+  int c;
+  fd_set readfs;
+  struct timeval tv;
+
+  io_display(d);
+
+  mvprintw(0, 0,
+           "Choose a location where a monster is standing. \nPress 'z' to attack with your ranged weapon or 'esc' to exit.");
+
+  dest[dim_y] = d->PC->position[dim_y];
+  dest[dim_x] = d->PC->position[dim_x];
+
+  mvaddch(dest[dim_y] + 1, dest[dim_x], '*');
+  refresh();
+
+  do {
+    do{
+      FD_ZERO(&readfs);
+      FD_SET(STDIN_FILENO, &readfs);
+
+      tv.tv_sec = 0;
+      tv.tv_usec = 125000; /* An eigth of a second */
+
+      mod_redisplay_non_terrain(d, dest);
+    } while (!select(STDIN_FILENO + 1, &readfs, NULL, NULL, &tv));
+    /* Can simply draw the terrain when we move the cursor away, *
+     * because if it is a character or object, the refresh       *
+     * function will fix it for us.                              */
+    switch (pc_learned_terrain(d->PC, dest[dim_y], dest[dim_x])) {
+    case ter_wall:
+    case ter_wall_immutable:
+    case ter_unknown:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], ' ');
+      break;
+    case ter_floor:
+    case ter_floor_room:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '.');
+      break;
+    case ter_floor_hall:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '#');
+      break;
+    case ter_debug:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '*');
+      break;
+    case ter_stairs_up:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '<');
+      break;
+    case ter_stairs_down:
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '>');
+      break;
+    default:
+ /* Use zero as an error symbol, since it stands out somewhat, and it's *
+  * not otherwise used.                                                 */
+      mvaddch(dest[dim_y] + 1, dest[dim_x], '0');
+    }
+    switch ((c = getch())) {
+    case '7':
+    case 'y':
+    case KEY_HOME:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    case '8':
+    case 'k':
+    case KEY_UP:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      break;
+    case '9':
+    case 'u':
+    case KEY_PPAGE:
+      if (dest[dim_y] != 1) {
+        dest[dim_y]--;
+      }
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '6':
+    case 'l':
+    case KEY_RIGHT:
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '3':
+    case 'n':
+    case KEY_NPAGE:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      if (dest[dim_x] != DUNGEON_X - 2) {
+        dest[dim_x]++;
+      }
+      break;
+    case '2':
+    case 'j':
+    case KEY_DOWN:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      break;
+    case '1':
+    case 'b':
+    case KEY_END:
+      if (dest[dim_y] != DUNGEON_Y - 2) {
+        dest[dim_y]++;
+      }
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    case '4':
+    case 'h':
+    case KEY_LEFT:
+      if (dest[dim_x] != 1) {
+        dest[dim_x]--;
+      }
+      break;
+    }
+  } while (c != 'z' && c != 27);
+
+  if (c == 27) {
+    io_display(d);
+    return 1;
+  }
+
+  if(c == 'z') {
+    if(d->character_map[dest[dim_y]][dest[dim_x]] == nullptr || (dest[dim_y] == d->PC->position[dim_y] && dest[dim_x] == d->PC->position[dim_x])) {
+      clear();
+      mvprintw(0, 0, "No monster on the position you selected");
+      mvprintw(23, 0, "press any key to return to the game");
+      refresh();
+      getch();
+      io_display(d);
+      return 1;
+    }
+    else {
+      character *n = d->character_map[dest[dim_y]][dest[dim_x]];
+      io_range_dam(n, d);
+      io_display(d);
+      return 0;
+    }
+  }
+
+  io_display(d);
+
+  return 0;
+  }
+}
+
+void mod_redisplay_non_terrain(dungeon *d, pair_t cursor) {
+  pair_t pos;
+  uint32_t color;
+  uint32_t illuminated;
+
+  for (pos[dim_y] = 0; pos[dim_y] < DUNGEON_Y; pos[dim_y]++) {
+    for (pos[dim_x] = 0; pos[dim_x] < DUNGEON_X; pos[dim_x]++) {
+      if ((illuminated = is_illuminated(d->PC,
+                                        pos[dim_y],
+                                        pos[dim_x]))) {
+        attron(A_BOLD);
+      }
+      if (cursor[dim_y] == pos[dim_y] && cursor[dim_x] == pos[dim_x]) {
+        mvaddch(pos[dim_y] + 1, pos[dim_x], '*');
+      } else if (d->character_map[pos[dim_y]][pos[dim_x]]&& illuminated) {
+        attron(COLOR_PAIR((color = d->character_map[pos[dim_y]]
+                                                   [pos[dim_x]]->get_color())));
+        mvaddch(pos[dim_y] + 1, pos[dim_x],
+                character_get_symbol(d->character_map[pos[dim_y]][pos[dim_x]]));
+        attroff(COLOR_PAIR(color));
+      } else if (d->objmap[pos[dim_y]][pos[dim_x]] && illuminated) {
+        attron(COLOR_PAIR(d->objmap[pos[dim_y]][pos[dim_x]]->get_color()));
+        mvaddch(pos[dim_y] + 1, pos[dim_x],
+                d->objmap[pos[dim_y]][pos[dim_x]]->get_symbol());
+        attroff(COLOR_PAIR(d->objmap[pos[dim_y]][pos[dim_x]]->get_color()));
+      }
+      attroff(A_BOLD);
+    }
+  }
+
+  refresh();
+}
+
+void io_range_dam(character *n, dungeon *d) {
+  npc *m = dynamic_cast<npc*>(n);
+  int damage = d->PC->eq[2]->roll_dice();
+  if(damage >= (int) m->hp) {
+    m->hp = 0;
+    m->alive = 0;
+    character_increment_dkills(d->PC);
+    character_increment_ikills(d->PC, (character_get_dkills(m) +
+				       character_get_ikills(m)));
+    d->num_monsters--;
+    charpair(m->position) = NULL;
+    io_queue_message("%s dies", m->name);
+  }
+  else{
+    m->hp -= damage;
+    io_queue_message("You hit %s for %d.", m->name, damage);
+  }
+  return;
+}
+
